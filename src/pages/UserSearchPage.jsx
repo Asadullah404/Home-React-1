@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase"; // Import db from your firebase.js file
+import { db } from "../firebase";
 import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const UserSearchPage = () => {
-  const [email, setEmail] = useState(""); // Store the search term
-  const [users, setUsers] = useState([]); // Store the fetched users
+  const [email, setEmail] = useState("");
+  const [users, setUsers] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUsers(); // Fetch all users when the page loads
+    fetchUsers();
   }, []);
 
-  // Fetch users from the 'users' collection
   const fetchUsers = async () => {
     try {
       const usersRef = collection(db, "users");
@@ -30,7 +29,6 @@ const UserSearchPage = () => {
     }
   };
 
-  // Handle search by email
   const handleSearch = (e) => {
     e.preventDefault();
     if (email === "") {
@@ -43,39 +41,37 @@ const UserSearchPage = () => {
     }
   };
 
-  // Handle user deletion
   const handleDeleteUser = async (uid) => {
     try {
       const userDocRef = doc(db, "users", uid);
       const readingsQuery = query(collection(db, "readings"), where("uid", "==", uid));
       const readingsSnapshot = await getDocs(readingsQuery);
 
-      // Delete associated readings (meters)
       readingsSnapshot.forEach((doc) => {
-        deleteDoc(doc.ref); // Delete reading document
+        deleteDoc(doc.ref);
       });
 
-      // Delete the user document
       await deleteDoc(userDocRef);
       alert("User and associated meters deleted successfully.");
-      fetchUsers(); // Re-fetch the users after deletion
+      fetchUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
       alert("Failed to delete user.");
     }
   };
 
-  // Redirect to the history page of the selected user
   const handleRedirectToHistory = (email) => {
-    navigate(`/History/${email}`); // Assuming history page route is `/HistoryAll/:email`
+    navigate(`/History/${email}`);
   };
 
   return (
     <div className="container mx-auto p-6 bg-white shadow-lg rounded-lg max-w-2xl">
-      <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">Search and Manage Users</h1>
+      <h1 className="text-2xl md:text-3xl font-semibold text-center text-gray-800 mb-4">
+        Search and Manage Users
+      </h1>
 
       {/* Search Box */}
-      <form onSubmit={handleSearch} className="mb-6">
+      <form onSubmit={handleSearch} className="mb-4 flex flex-col sm:flex-row gap-2">
         <input
           type="text"
           placeholder="Search by email"
@@ -85,41 +81,43 @@ const UserSearchPage = () => {
         />
         <button
           type="submit"
-          className="mt-2 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
         >
           Search
         </button>
       </form>
 
-      {/* Users Table */}
-      <table className="min-w-full table-auto">
-        <thead>
-          <tr>
-            <th className="px-4 py-2 text-left">Email</th>
-            <th className="px-4 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.uid} className="border-b">
-              <td
-                className="px-4 py-2 cursor-pointer"
-                onClick={() => handleRedirectToHistory(user.email)}
-              >
-                {user.email}
-              </td>
-              <td className="px-4 py-2">
-                <button
-                  onClick={() => handleDeleteUser(user.uid)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  Delete
-                </button>
-              </td>
+      {/* Users Table (Responsive) */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full table-auto border-collapse border border-gray-200">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="px-4 py-2 text-left border border-gray-200">Email</th>
+              <th className="px-4 py-2 text-left border border-gray-200">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.uid} className="border-b">
+                <td
+                  className="px-4 py-2 cursor-pointer text-blue-600 hover:underline"
+                  onClick={() => handleRedirectToHistory(user.email)}
+                >
+                  {user.email}
+                </td>
+                <td className="px-4 py-2">
+                  <button
+                    onClick={() => handleDeleteUser(user.uid)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
