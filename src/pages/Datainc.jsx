@@ -1,37 +1,58 @@
-import React, { useState } from "react"
+
+import React, { useState } from "react";
+import { auth, db } from "../firebase"; // Import Firestore and Auth
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const AddReading = () => {
-  const [meterId, setMeterId] = useState("")
-  const [reading, setReading] = useState("")
-  const [readingDate, setReadingDate] = useState("")
+  const [meterId, setMeterId] = useState("");
+  const [reading, setReading] = useState("");
+  const [readingDate, setReadingDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const handleAddReading = async (e) => {
-    e.preventDefault()
-    try {
-      const response = await fetch("/api/reading", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ meterId, reading, readingDate }),
-      })
+    e.preventDefault();
+    setLoading(true); // Start loading state
+    setMessage(""); // Reset message state
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+    // Get the current logged-in user
+    const user = auth.currentUser;
 
-      // Reset form fields after successful submission
-      setMeterId("")
-      setReading("")
-      setReadingDate("")
-
-      // Optionally, provide feedback to the user (e.g., a success message)
-      console.log("Reading added successfully!")
-    } catch (error) {
-      console.error("Error adding reading:", error)
-      // Optionally, display an error message to the user
+    if (!user) {
+      setMessage("Error: No user is logged in.");
+      setLoading(false);
+      return;
     }
-  }
+
+    const uid = user.uid;
+
+    try {
+      // Prepare data for Firestore
+      const readingData = {
+        uid, // User's UID
+        meterId,
+        reading: parseFloat(reading), // Ensure reading is stored as a number
+        readingDate,
+        createdAt: serverTimestamp(), // Firestore server timestamp
+      };
+
+      // Save to Firestore
+      await addDoc(collection(db, "readings"), readingData);
+
+      // Reset form fields
+      setMeterId("");
+      setReading("");
+      setReadingDate("");
+
+      // Provide feedback to the user
+      setMessage("Reading added successfully!");
+    } catch (error) {
+      console.error("Error adding reading:", error);
+      setMessage("Failed to add reading. Please try again.");
+    } finally {
+      setLoading(false); // Stop loading state
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-100 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -84,18 +105,31 @@ const AddReading = () => {
               <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  disabled={loading}
+                  className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                    loading ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
                 >
-                  Submit
+                  {loading ? "Submitting..." : "Submit"}
                 </button>
               </div>
             </form>
+            {message && (
+              <div
+                className={`mt-4 p-2 text-center font-medium rounded-md ${
+                  message.includes("successfully")
+                    ? "text-green-800 bg-green-200"
+                    : "text-red-800 bg-red-200"
+                }`}
+              >
+                {message}
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AddReading
-
+export default AddReading;

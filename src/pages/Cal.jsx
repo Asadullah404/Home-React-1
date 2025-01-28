@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { db } from "../firebase"; // Ensure your Firebase config is properly imported
+import React, { useState, useEffect } from "react";
+import { db } from "../firebase"; // Ensure Firebase config is imported
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 const Cal = () => {
   const [searchMeterId, setSearchMeterId] = useState("");
@@ -15,6 +16,35 @@ const Cal = () => {
   const [watts, setWatts] = useState("");
   const [hours, setHours] = useState("");
   const [wattHourResult, setWattHourResult] = useState("");
+  const [userMeters, setUserMeters] = useState([]);
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    if (user) {
+      fetchUserMeters();
+    }
+  }, [user]);
+
+  // Fetch meters associated with the logged-in user
+  const fetchUserMeters = async () => {
+    try {
+      const q = query(
+        collection(db, "readings"),
+        where("uid", "==", user.uid), // Filter readings by user's uid
+        orderBy("readingDate")
+      );
+      const querySnapshot = await getDocs(q);
+      const metersSet = new Set();
+      querySnapshot.forEach((doc) => {
+        metersSet.add(doc.data().meterId);
+      });
+      setUserMeters([...metersSet]); // Set unique meters for the user
+    } catch (error) {
+      console.error("Error fetching user meters:", error);
+    }
+  };
 
   // Fetch readings for a given meter ID
   const fetchReadings = async (e) => {
@@ -25,6 +55,7 @@ const Cal = () => {
       const q = query(
         collection(db, "readings"),
         where("meterId", "==", searchMeterId),
+        where("uid", "==", user.uid), // Ensure we fetch readings for the current user only
         orderBy("readingDate")
       );
       const querySnapshot = await getDocs(q);
@@ -46,19 +77,24 @@ const Cal = () => {
   // Calculate units used within a date range
   const calculateUnitsUsedFromDateRange = (e) => {
     e.preventDefault();
-
+  
     const fromValue = parseFloat(fromReading);
     const toValue = parseFloat(toReading);
-
+  
+    // Check if fromReading and toReading are valid numbers
+    if (isNaN(fromValue) || isNaN(toValue)) {
+      setDateRangeResult("Please select valid readings.");
+      return;
+    }
+  
     if (toValue <= fromValue) {
       setDateRangeResult("To reading must be greater than from reading.");
       return;
     }
-
+  
     const unitsUsed = toValue - fromValue;
     setDateRangeResult(`Units used: ${unitsUsed}`);
   };
-
   // Calculate units per day, week, or month
   const calculateUnits = (e) => {
     e.preventDefault();
@@ -116,14 +152,20 @@ const Cal = () => {
             <label htmlFor="searchMeterId" className="block text-lg font-medium text-gray-600">
               Meter ID:
             </label>
-            <input
-              type="text"
+            <select
               id="searchMeterId"
               value={searchMeterId}
               onChange={(e) => setSearchMeterId(e.target.value)}
               required
               className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
+            >
+              <option value="">Select Meter</option>
+              {userMeters.map((meterId) => (
+                <option key={meterId} value={meterId}>
+                  {meterId}
+                </option>
+              ))}
+            </select>
           </div>
           <button
             type="submit"
@@ -250,7 +292,7 @@ const Cal = () => {
             </label>
             <input
               type="number"
-              id="watts              "
+              id="watts"
               value={watts}
               onChange={(e) => setWatts(e.target.value)}
               required

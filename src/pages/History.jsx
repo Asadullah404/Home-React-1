@@ -1,171 +1,180 @@
-// import React, { useEffect, useState } from "react";
-// import { db } from "../firebase"; // Ensure your Firebase configuration is correctly set up and imported
-// import { collection, query, orderBy, getDocs } from "firebase/firestore";
-
-// const History = () => {
-//   const [meterReadings, setMeterReadings] = useState([]);
-
-//   useEffect(() => {
-//     const fetchMeterReadings = async () => {
-//       try {
-//         const readingsQuery = query(
-//           collection(db, "readings"),
-//           orderBy("meterId")
-//         );
-//         const querySnapshot = await getDocs(readingsQuery);
-
-//         const readingsByMeterId = {};
-
-//         querySnapshot.forEach((doc) => {
-//           const reading = doc.data();
-//           const { meterId } = reading;
-
-//           // Group readings by meterId
-//           if (!readingsByMeterId[meterId]) {
-//             readingsByMeterId[meterId] = [];
-//           }
-//           readingsByMeterId[meterId].push(reading);
-//         });
-
-//         setMeterReadings(readingsByMeterId);
-//       } catch (error) {
-//         console.error("Error fetching meter readings:", error);
-//       }
-//     };
-
-//     fetchMeterReadings();
-//   }, []);
-
-//   return (
-//     <div className="p-6">
-     
-
-//       <section>
-//         <h2 className="text-2xl font-semibold mb-4">History</h2>
-
-//         {Object.keys(meterReadings).length === 0 ? (
-//           <p className="text-gray-600">Loading meter readings...</p>
-//         ) : (
-//           <div>
-//             {Object.entries(meterReadings).map(([meterId, readings]) => (
-//               <div key={meterId} className="mb-6 border p-4 rounded-lg shadow-sm">
-//                 <h3 className="text-xl font-bold text-gray-700 mb-2">Meter ID: {meterId}</h3>
-
-//                 {readings.map((reading, index) => (
-//                   <div key={index} className="mb-4">
-//                     <p className="text-gray-800">Reading: {reading.reading}</p>
-//                     <p className="text-gray-600">Date: {reading.readingDate}</p>
-//                     <hr className="my-2 border-gray-300" />
-//                   </div>
-//                 ))}
-//               </div>
-//             ))}
-//           </div>
-//         )}
-//       </section>
-
-//       <footer className="mt-10 text-center text-gray-500">
-//         <p>&copy; 2024 Electricity Meter Readings. All rights reserved.</p>
-//       </footer>
-//     </div>
-//   );
-// };
-
-// export default History;
-
-
-import React, { useEffect, useState } from "react";
-import { db } from "../firebase"; // Ensure your Firebase configuration is correctly set up and imported
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import React, { useState, useEffect } from "react";
+import { db } from "../firebase"; // Import db from your firebase.js file
+import { collection, getDocs, query, where, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { useParams } from "react-router-dom";
 
 const History = () => {
-  const [meterReadings, setMeterReadings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [historyData, setHistoryData] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [editReading, setEditReading] = useState(null);
+  const [editDate, setEditDate] = useState("");
+  const { email } = useParams(); // Get the email from the URL params
+  const [userUid, setUserUid] = useState(null);
 
   useEffect(() => {
-    const fetchMeterReadings = async () => {
-      try {
-        const readingsQuery = query(
-          collection(db, "readings"),
-          orderBy("meterId")
-        );
-        const querySnapshot = await getDocs(readingsQuery);
+    fetchUserUid(); // Fetch the user UID based on email
+  }, [email]);
 
-        const readingsByMeterId = {};
+  const fetchUserUid = async () => {
+    try {
+      const usersRef = collection(db, "users");
+      const usersSnapshot = await getDocs(usersRef);
+      let foundUserUid = null;
 
-        querySnapshot.forEach((doc) => {
-          const reading = doc.data();
-          const { meterId } = reading;
+      usersSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.email === email) {
+          foundUserUid = data.uid;
+        }
+      });
 
-          // Group readings by meterId
-          if (!readingsByMeterId[meterId]) {
-            readingsByMeterId[meterId] = [];
-          }
-          readingsByMeterId[meterId].push(reading);
-        });
-
-        setMeterReadings(readingsByMeterId);
-      } catch (error) {
-        console.error("Error fetching meter readings:", error);
-      } finally {
-        setLoading(false);
+      if (foundUserUid) {
+        setUserUid(foundUserUid);
+        fetchHistoryData(foundUserUid); // Fetch history data once the UID is found
+      } else {
+        console.log("No user found with the email:", email);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user UID:", error);
+    }
+  };
 
-    fetchMeterReadings();
-  }, []);
+  const fetchHistoryData = async (uid) => {
+    try {
+      console.log("Fetching history data for UID:", uid); // Debugging log
+      const readingsQuery = query(collection(db, "readings"), where("uid", "==", uid)); // Query using uid
+      const readingsSnapshot = await getDocs(readingsQuery);
+
+      let historyList = [];
+      readingsSnapshot.forEach((doc) => {
+        console.log("Found reading:", doc.data()); // Debugging log
+        historyList.push({ id: doc.id, ...doc.data() });
+      });
+
+      setHistoryData(historyList);
+
+      if (historyList.length === 0) {
+        console.log("No history found for UID:", uid); // Debugging log for no data
+      }
+    } catch (error) {
+      console.error("Error fetching history data:", error);
+    }
+  };
+
+  const handleEdit = (reading) => {
+    setEditMode(true);
+    setEditReading(reading.reading);
+    setEditDate(reading.readingDate);
+  };
+
+  const handleUpdate = async () => {
+    try {
+      if (editReading && editDate) {
+        const readingRef = doc(db, "readings", editReading.id); // Get the document reference
+        await updateDoc(readingRef, {
+          reading: editReading,
+          readingDate: editDate,
+        });
+        fetchHistoryData(userUid); // Fetch updated data
+        setEditMode(false); // Close edit mode
+      }
+    } catch (error) {
+      console.error("Error updating reading:", error);
+    }
+  };
+
+  const handleDelete = async (readingId) => {
+    try {
+      const readingRef = doc(db, "readings", readingId);
+      await deleteDoc(readingRef);
+      fetchHistoryData(userUid); // Fetch updated data
+    } catch (error) {
+      console.error("Error deleting reading:", error);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <header className="mb-10 text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">Meter Readings History</h1>
-        <p className="text-gray-600 text-lg">Track and view your meter readings by ID</p>
-      </header>
+    <div className="container mx-auto p-6 bg-white shadow-lg rounded-lg max-w-2xl">
+      <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">History of {email}</h1>
 
-      <section className="container mx-auto">
-        {loading ? (
-          <div className="text-center">
-            <p className="text-gray-600 text-xl">Loading meter readings...</p>
-          </div>
-        ) : Object.keys(meterReadings).length === 0 ? (
-          <div className="text-center">
-            <p className="text-gray-600 text-xl">No readings found.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(meterReadings).map(([meterId, readings]) => (
-              <div
-                key={meterId}
-                className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow"
-              >
-                <h3 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
-                  Meter ID: <span className="text-blue-600">{meterId}</span>
-                </h3>
+      {/* Edit Form */}
+      {editMode && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Edit Reading</h2>
+          <form onSubmit={handleUpdate}>
+            <div className="mb-4">
+              <label className="block text-gray-700">Reading</label>
+              <input
+                type="text"
+                value={editReading}
+                onChange={(e) => setEditReading(e.target.value)}
+                className="border px-4 py-2 rounded w-full"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700">Date</label>
+              <input
+                type="date"
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+                className="border px-4 py-2 rounded w-full"
+              />
+            </div>
+            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+              Update Reading
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditMode(false)}
+              className="bg-gray-500 text-white px-4 py-2 rounded ml-4"
+            >
+              Cancel
+            </button>
+          </form>
+        </div>
+      )}
 
-                <ul>
-                  {readings.map((reading, index) => (
-                    <li
-                      key={index}
-                      className="mb-4 last:mb-0 p-3 bg-gray-50 rounded-lg border border-gray-100"
-                    >
-                      <p className="text-gray-700 font-medium">
-                        Reading: <span className="font-bold">{reading.reading}</span>
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Date: {new Date(reading.readingDate).toLocaleDateString()}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <footer className="mt-16 text-center text-gray-500">
-        <p>&copy; {new Date().getFullYear()} Electricity Meter Readings. All rights reserved.</p>
-      </footer>
+      {/* History Table */}
+      <table className="min-w-full table-auto">
+        <thead>
+          <tr>
+            <th className="px-4 py-2 text-left">Reading</th>
+            <th className="px-4 py-2 text-left">Date</th>
+            <th className="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {historyData.length > 0 ? (
+            historyData.map((reading, index) => (
+              <tr key={index} className="border-b">
+                <td className="px-4 py-2">{reading.reading}</td>
+                <td className="px-4 py-2">
+                  {/* Correctly access createdAt field */}
+                  {reading.createdAt ? new Date(reading.createdAt.seconds * 1000).toLocaleDateString() : "N/A"}
+                </td>
+                <td className="px-4 py-2">
+                  <button
+                    onClick={() => handleEdit(reading)}
+                    className="bg-yellow-500 text-white px-4 py-2 rounded mr-2"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(reading.id)}
+                    className="bg-red-500 text-white px-4 py-2 rounded"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="3" className="px-4 py-2 text-center">No history available</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 };

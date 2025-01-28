@@ -1,39 +1,39 @@
 import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../firebase";
-import { signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 import { useState } from "react";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "../firebase"; // Import Firestore
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  // Email/Password Login
-  const handleEmailLogin = async (e) => {
-    e.preventDefault();
+  // Save user data to Firestore with role
+  const saveUserDataToFirestore = async (user) => {
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
-      console.log(userCredential.user);
-      navigate("/profile"); // Redirect after login
-    } catch (err) {
-      console.error(err);
-      setError("Invalid email or password.");
+      const userRef = doc(db, "users", user.uid); // users collection where document ID is the user's UID
+
+      // Check if the user already exists to avoid overwriting the role
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        // If the user doesn't exist, assign a new role (e.g., "user")
+        await setDoc(userRef, {
+          email: user.email,
+          uid: user.uid,
+          role: "user", // Assign default role for new users
+        });
+        console.log("New user data saved to Firestore with role");
+      } else {
+        console.log("User already exists, role will not change");
+      }
+
+      // After saving user data, fetch the role
+      navigateToDashboard(user); // Navigate based on role
+
+    } catch (error) {
+      console.error("Error saving user data to Firestore", error);
     }
   };
 
@@ -41,11 +41,26 @@ const Login = () => {
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      console.log(result.user);
-      navigate("/profile"); // Redirect after Google sign-in
+      const user = result.user;
+      console.log(user);
+      await saveUserDataToFirestore(user); // Save user data to Firestore
     } catch (err) {
       console.error(err);
       setError("Failed to sign in with Google.");
+    }
+  };
+
+  // Navigate to the correct dashboard based on role
+  const navigateToDashboard = async (user) => {
+    const userRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userRef);
+    if (userDoc.exists()) {
+      const userRole = userDoc.data().role;
+      if (userRole === "admin") {
+        navigate("/admin-dashboard"); // Redirect to admin dashboard if role is admin
+      } else {
+        navigate("/user-dashboard"); // Redirect to user dashboard if role is user
+      }
     }
   };
 
@@ -56,43 +71,8 @@ const Login = () => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">
             Welcome Back
           </h1>
-          <form className="space-y-6" onSubmit={handleEmailLogin}>
-            <div>
-              <label htmlFor="email" className="block">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg p-2"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block">Password</label>
-              <input
-                type="password"
-                name="password"
-                id="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg p-2"
-              />
-            </div>
-            {error && <p className="text-red-600">{error}</p>}
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-            >
-              Login
-            </button>
-          </form>
 
-          <div className="text-center">OR</div>
+          {error && <p className="text-red-600 text-center">{error}</p>}
 
           <button
             onClick={handleGoogleSignIn}

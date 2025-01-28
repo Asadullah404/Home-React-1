@@ -1,12 +1,16 @@
 import React from "react";
+import { auth } from "../firebase";
 import { Card, CardContent } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
-import { FileText, Calculator, BarChart3, LogOut } from "lucide-react";
+import { FileText, Calculator, BarChart3, History } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 const UserDashboard = () => {
-  const userName = "John Doe";
+  const user = auth.currentUser;
+
+  // Remove the '@gmail.com' from the user's email
+  const userEmailWithoutDomain = user?.email?.replace("@gmail.com", "");
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10">
@@ -16,7 +20,9 @@ const UserDashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-extrabold text-gray-800">Welcome, {userName}!</h1>
+        <h1 className="text-4xl font-extrabold text-gray-800">
+          Welcome, {userEmailWithoutDomain}!
+        </h1>
         <p className="text-lg text-gray-600 mt-2">Here is your dashboard overview.</p>
       </motion.div>
 
@@ -63,15 +69,18 @@ const UserDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Logout Section */}
+        {/* History Section */}
         <Card>
           <CardContent>
-            <LogOut className="w-12 h-12 text-red-500 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-800 text-center">Logout</h2>
-            <p className="text-gray-600 text-center mt-2">Sign out of your account securely.</p>
-            <Button className="mt-4 w-full" variant="default">
-              Logout
-            </Button>
+            <History className="w-12 h-12 text-indigo-500 mb-4" />
+            <h2 className="text-xl font-semibold text-gray-800 text-center">View History</h2>
+            <p className="text-gray-600 text-center mt-2">Check the history of your readings.</p>
+            <Link
+              to="/historyAll"
+              className="block px-4 py-2 rounded-lg text-center bg-indigo-600 text-white hover:bg-indigo-700 transition mt-4"
+            >
+              View History
+            </Link>
           </CardContent>
         </Card>
       </div>
