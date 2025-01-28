@@ -55,7 +55,7 @@ const Navbar = ({ isAdmin }) => {
           } lg:flex lg:items-center lg:space-x-6 space-y-4 lg:space-y-0 lg:static absolute bg-blue-600 w-full lg:w-auto p-4 lg:p-0 top-16 lg:top-0 left-0 z-50`}
         >
           {/* Main Links */}
-          <Link to="/home1" className="block px-4 py-2 rounded-lg text-center hover:bg-blue-700 transition">
+          <Link to="/home" className="block px-4 py-2 rounded-lg text-center hover:bg-blue-700 transition">
             Home
           </Link>
 

@@ -8,7 +8,7 @@ import Login from "./pages/Login";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
-import Home1 from "./pages/Home1";
+import Home from "./pages/Home";
 import Cal from "./pages/Cal";
 import Datainc from "./pages/Datainc";
 import Genpdf from "./pages/Genpdf";
@@ -57,22 +57,25 @@ function App() {
       {/* Main Content */}
       <main className="flex-grow">
         <Routes>
+          {/* Redirect root (/) to /home */}
+          <Route path="/" element={<Navigate to="/home" />} />
+
           <Route path="/login" element={<Login setUser={setUser} />} />
 
           {/* Protected route for Admin */}
           <Route
             path="/admin-dashboard"
-            element={isAdmin ? <AdminDashboard /> : <Navigate to="/home1" />}
+            element={isAdmin ? <AdminDashboard /> : <Navigate to="/home" />}
           />
 
           {/* Protected route for User (accessible to both User and Admin) */}
           <Route
             path="/user-dashboard"
-            element={user ? <UserDashboard user={user} /> : <Navigate to="/home1" />}
+            element={user ? <UserDashboard user={user} /> : <Navigate to="/home" />}
           />
 
           {/* Public routes */}
-          <Route path="/home1" element={<Home1 />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/Cal" element={<Cal />} />
           <Route path="/Datainc" element={<Datainc />} />
           <Route path="/Genpdf" element={<Genpdf />} />
@@ -80,7 +83,6 @@ function App() {
           <Route path="/history/:email" element={<History />} />
           <Route path="/UserSearchPage" element={<UserSearchPage />} />
           <Route path="/HistoryAll" element={<HistoryAll />} />
- 
         </Routes>
       </main>
 
