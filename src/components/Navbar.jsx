@@ -36,17 +36,17 @@ const Navbar = ({ isAdmin }) => {
 
         {/* Hamburger Menu with Enhanced Styling */}
         <button
-          className="lg:hidden flex items-center px-6 py-4 bg-green-700 text-white font-semibold rounded-lg hover:bg-green-800 transition"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          <svg className="fill-current h-6 w-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            {isMenuOpen ? (
-              <path d="M6 18L18 6M6 6l12 12" /> // Close Icon
-            ) : (
-              <path d="M4 6h16M4 12h16m-7 6h7" /> // Hamburger Icon
-            )}
-          </svg>
-        </button>
+  className="lg:hidden flex items-center px-6 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-200 transition"
+  onClick={() => setIsMenuOpen(!isMenuOpen)}
+>
+  <svg className="fill-current h-6 w-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    {isMenuOpen ? (
+      <path d="M6 18L18 6M6 6l12 12" /> // Close Icon
+    ) : (
+      <path d="M4 6h16M4 12h16m-7 6h7" /> // Hamburger Icon
+    )}
+  </svg>
+</button>
 
         {/* Navigation Links */}
         <div
