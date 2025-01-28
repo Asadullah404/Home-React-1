@@ -34,19 +34,19 @@ const Navbar = ({ isAdmin }) => {
           <img src="/vite.PNG" alt="Logo" className="h-15 w-30 object-contain" />
         </Link>
 
-        {/* Hamburger Menu with Enhanced Styling */}
+        {/* Improved Hamburger Menu Button */}
         <button
-  className="lg:hidden flex items-center px-6 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-200 transition"
-  onClick={() => setIsMenuOpen(!isMenuOpen)}
->
-  <svg className="fill-current h-6 w-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    {isMenuOpen ? (
-      <path d="M6 18L18 6M6 6l12 12" /> // Close Icon
-    ) : (
-      <path d="M4 6h16M4 12h16m-7 6h7" /> // Hamburger Icon
-    )}
-  </svg>
-</button>
+          className="lg:hidden flex items-center justify-center w-10 h-10 bg-gray-200 rounded-md shadow-md border border-gray-400 hover:bg-gray-300 transition duration-300"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            {isMenuOpen ? (
+              <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            ) : (
+              <path d="M4 6h16M4 12h16m-7 6h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            )}
+          </svg>
+        </button>
 
         {/* Navigation Links */}
         <div
