@@ -14,8 +14,8 @@ const Cal = () => {
   const [readingPeriod, setReadingPeriod] = useState("Inst");
   const [unitsResult, setUnitsResult] = useState("");
   const [watts, setWatts] = useState("");
-  const [hours, setHours] = useState("");
-  const [wattHourResult, setWattHourResult] = useState("");
+  const [minutes, setMinutes] = useState("");
+  const [minuteBasedResult, setMinuteBasedResult] = useState("");
   const [userMeters, setUserMeters] = useState([]);
 
   const auth = getAuth();
@@ -130,15 +130,21 @@ const Cal = () => {
   };
 
   // Calculate units by watt-hour
-  const calculateUnitsByWattHour = (e) => {
+  const calculateUnitsByWattMinute = (e) => {
     e.preventDefault();
 
     const wattValue = parseFloat(watts);
-    const hourValue = parseFloat(hours);
+    const minuteValue = parseFloat(minutes);
 
-    const unitsUsed = (wattValue * hourValue) / 1000; // Convert watt-hours to kWh
-    setWattHourResult(`Units consumed: ${unitsUsed.toFixed(2)} kWh`);
+    if (isNaN(wattValue) || isNaN(minuteValue) || minuteValue <= 0) {
+      setMinuteBasedResult("Please enter valid watts and minutes.");
+      return;
+    }
+
+    const unitsUsed = (wattValue * (minuteValue / 60)) / 1000; // Convert watt-minutes to kWh
+    setMinuteBasedResult(`Units consumed: ${unitsUsed.toFixed(4)} kWh`);
   };
+
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -283,9 +289,9 @@ const Cal = () => {
           <p className="text-lg text-green-600 mt-4 text-center">{unitsResult}</p>
         )}
 
-        {/* Watt-Hour Calculation Form */}
-        <form onSubmit={calculateUnitsByWattHour} className="space-y-6 mt-10">
-          <h2 className="text-2xl font-semibold text-gray-700">Units by Watt * Hour</h2>
+               {/* Watt-Minute Calculation Form */}
+               <form onSubmit={calculateUnitsByWattMinute} className="space-y-6 mt-10">
+          <h2 className="text-2xl font-semibold text-gray-700">Units by Watt * Minutes</h2>
           <div>
             <label htmlFor="watts" className="block text-lg font-medium text-gray-600">
               Watts:
@@ -300,14 +306,14 @@ const Cal = () => {
             />
           </div>
           <div>
-            <label htmlFor="hours" className="block text-lg font-medium text-gray-600">
-              Hours:
+            <label htmlFor="minutes" className="block text-lg font-medium text-gray-600">
+              Minutes:
             </label>
             <input
               type="number"
-              id="hours"
-              value={hours}
-              onChange={(e) => setHours(e.target.value)}
+              id="minutes"
+              value={minutes}
+              onChange={(e) => setMinutes(e.target.value)}
               required
               className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
@@ -319,8 +325,8 @@ const Cal = () => {
             Calculate
           </button>
         </form>
-        {wattHourResult && (
-          <p className="text-lg text-green-600 mt-4 text-center">{wattHourResult}</p>
+        {minuteBasedResult && (
+          <p className="text-lg text-green-600 mt-4 text-center">{minuteBasedResult}</p>
         )}
       </div>
     </div>
