@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "../components/ui/Button"
 import { Card, CardContent, CardHeader } from "../components/ui/Card"
 
@@ -73,7 +73,7 @@ const Home1 = () => {
 
   function scrambleWord(word) {
     return word
-      .split(" ")
+      .split("")
       .sort(() => Math.random() - 0.5)
       .join("")
   }
@@ -131,7 +131,6 @@ const Home1 = () => {
       </CardContent>
     </Card>
   )
-  
 
   const MemoryCard = () => (
     <Card className="bg-white">
@@ -212,14 +211,360 @@ const Home1 = () => {
     </Card>
   )
 
-  // Add other games here following the same structure...
+  const TicTacToe = () => {
+    const calculateWinner = (squares) => {
+      const lines = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+      ]
+      for (let i = 0; i < lines.length; i++) {
+        const [a, b, c] = lines[i]
+        if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+          return squares[a]
+        }
+      }
+      return null
+    }
+
+    const handleClick = (i) => {
+      if (board[i] || calculateWinner(board)) return
+      const newBoard = [...board]
+      newBoard[i] = xIsNext ? "X" : "O"
+      setBoard(newBoard)
+      setXIsNext(!xIsNext)
+    }
+
+    const winner = calculateWinner(board)
+    const status = winner ? `Winner: ${winner}` : `Next player: ${xIsNext ? "X" : "O"}`
+
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <h2>Tic Tac Toe</h2>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-2">
+            {board.map((cell, index) => (
+              <Button
+                key={index}
+                onClick={() => handleClick(index)}
+                className="h-16 bg-blue-500 text-white"
+              >
+                {cell}
+              </Button>
+            ))}
+          </div>
+          <p className="mt-4 text-lg">{status}</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const RockPaperScissors = () => {
+    const choices = ["Rock", "Paper", "Scissors"]
+
+    const handleChoice = (choice) => {
+      const computerChoice = choices[Math.floor(Math.random() * 3)]
+      setPlayerChoice(choice)
+      setComputerChoice(computerChoice)
+      if (choice === computerChoice) {
+        setRpsResult("It's a tie!")
+      } else if (
+        (choice === "Rock" && computerChoice === "Scissors") ||
+        (choice === "Paper" && computerChoice === "Rock") ||
+        (choice === "Scissors" && computerChoice === "Paper")
+      ) {
+        setRpsResult("You win!")
+      } else {
+        setRpsResult("You lose!")
+      }
+    }
+
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <h2>Rock Paper Scissors</h2>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2 mb-4">
+            {choices.map((choice) => (
+              <Button
+                key={choice}
+                onClick={() => handleChoice(choice)}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                {choice}
+              </Button>
+            ))}
+          </div>
+          {playerChoice && computerChoice && (
+            <p className="text-lg">
+              You chose {playerChoice}, computer chose {computerChoice}. {rpsResult}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const ColorGuess = () => {
+    const handleGuess = (color) => {
+      if (color === colorToGuess) {
+        setColorMessage("Correct! 🎉")
+        setColorToGuess(generateColor())
+        setColorOptions(generateColorOptions())
+      } else {
+        setColorMessage("Wrong! Try again!")
+      }
+    }
+
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <h2>Color Guess</h2>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <div
+              className="h-16 w-full rounded-lg"
+              style={{ backgroundColor: colorToGuess }}
+            ></div>
+          </div>
+          <div className="flex gap-2">
+            {colorOptions.map((color, index) => (
+              <Button
+                key={index}
+                onClick={() => handleGuess(color)}
+                className="h-16 w-full"
+                style={{ backgroundColor: color }}
+              ></Button>
+            ))}
+          </div>
+          {colorMessage && <p className="mt-4 text-lg text-blue-600">{colorMessage}</p>}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const Hangman = () => {
+    const displayWord = hangmanWord
+      .split("")
+      .map((letter) => (guessedLetters.has(letter) ? letter : "_"))
+      .join(" ")
+
+    const handleGuess = (letter) => {
+      if (guessedLetters.has(letter)) return
+      setGuessedLetters((prev) => new Set([...prev, letter]))
+      if (!hangmanWord.includes(letter)) {
+        setRemainingGuesses((prev) => prev - 1)
+      }
+    }
+
+    useEffect(() => {
+      if (remainingGuesses === 0) {
+        setColorMessage(`You lost! The word was ${hangmanWord}`)
+      } else if (!displayWord.includes("_")) {
+        setColorMessage("You won! 🎉")
+      }
+    }, [remainingGuesses, displayWord, hangmanWord])
+
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <h2>Hangman</h2>
+        </CardHeader>
+        <CardContent>
+          <p className="text-lg">{displayWord}</p>
+          <p className="text-lg">Remaining guesses: {remainingGuesses}</p>
+          <div className="flex gap-2 mt-4">
+            {Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ").map((letter) => (
+              <Button
+                key={letter}
+                onClick={() => handleGuess(letter)}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+                disabled={guessedLetters.has(letter)}
+              >
+                {letter}
+              </Button>
+            ))}
+          </div>
+          {colorMessage && <p className="mt-4 text-lg text-blue-600">{colorMessage}</p>}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const WordScramble = () => {
+    const handleGuess = () => {
+      if (unscrambledGuess.toUpperCase() === scrambledWord.toUpperCase()) {
+        setScrambleMessage("Correct! 🎉")
+        setScrambledWord(scrambleWord(getRandomWord()))
+        setUnscrambledGuess("")
+      } else {
+        setScrambleMessage("Wrong! Try again!")
+      }
+    }
+
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <h2>Word Scramble</h2>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <p className="text-lg">Scrambled word: {scrambledWord}</p>
+          </div>
+          <div className="mb-4">
+            <label htmlFor="unscrambledGuess" className="block text-sm font-medium text-gray-700">Enter your guess:</label>
+            <input
+              id="unscrambledGuess"
+              type="text"
+              value={unscrambledGuess}
+              onChange={(e) => setUnscrambledGuess(e.target.value)}
+              placeholder="Unscramble the word"
+              className="mt-1 p-3 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <Button
+            onClick={handleGuess}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            Guess
+          </Button>
+          {scrambleMessage && <p className="mt-4 text-lg text-blue-600">{scrambleMessage}</p>}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const MathQuiz = () => {
+    const handleAnswer = () => {
+      const correctAnswer = eval(`${mathQuestion.num1} ${mathQuestion.operator} ${mathQuestion.num2}`)
+      if (Number(mathAnswer) === correctAnswer) {
+        setMathScore(mathScore + 1)
+        setMathQuestion(generateMathQuestion())
+        setMathAnswer("")
+      } else {
+        setMathScore(mathScore - 1)
+      }
+    }
+
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <h2>Math Quiz</h2>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <p className="text-lg">
+              What is {mathQuestion.num1} {mathQuestion.operator} {mathQuestion.num2}?
+            </p>
+          </div>
+          <div className="mb-4">
+            <label htmlFor="mathAnswer" className="block text-sm font-medium text-gray-700">Enter your answer:</label>
+            <input
+              id="mathAnswer"
+              type="number"
+              value={mathAnswer}
+              onChange={(e) => setMathAnswer(e.target.value)}
+              placeholder="Enter your answer"
+              className="mt-1 p-3 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <Button
+            onClick={handleAnswer}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            Submit
+          </Button>
+          <p className="mt-4 text-lg">Score: {mathScore}</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const SimonSays = () => {
+    const [isPlaying, setIsPlaying] = useState(false)
+
+    useEffect(() => {
+      if (isPlaying) {
+        const nextSequence = [...simonSequence, Math.floor(Math.random() * 4)]
+        setSimonSequence(nextSequence)
+        playSequence(nextSequence)
+      }
+    }, [isPlaying])
+
+    const playSequence = (sequence) => {
+      sequence.forEach((color, index) => {
+        setTimeout(() => {
+          setUserSequence([])
+        }, index * 1000)
+      })
+    }
+
+    const handleColorClick = (color) => {
+      if (!isPlaying) return
+      const newUserSequence = [...userSequence, color]
+      setUserSequence(newUserSequence)
+      if (newUserSequence.length === simonSequence.length) {
+        if (newUserSequence.every((val, index) => val === simonSequence[index])) {
+          setIsPlaying(false)
+          setSimonSequence([])
+          setUserSequence([])
+        } else {
+          setIsPlaying(false)
+          setSimonSequence([])
+          setUserSequence([])
+        }
+      }
+    }
+
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <h2>Simon Says</h2>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-2">
+            {["red", "blue", "green", "yellow"].map((color) => (
+              <Button
+                key={color}
+                onClick={() => handleColorClick(color)}
+                className={`h-16 bg-${color}-500 hover:bg-${color}-600 text-white`}
+              >
+                {color}
+              </Button>
+            ))}
+          </div>
+          <Button
+            onClick={() => setIsPlaying(true)}
+            className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            Start
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
-    <div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
       <GuessNumber />
       <MemoryCard />
-      <WhackAMole />
-      {/* Add other game components */}
+      {/* <WhackAMole /> */}
+      <TicTacToe />
+      <RockPaperScissors />
+      <ColorGuess />
+      {/* <Hangman /> */}
+      <WordScramble />
+      <MathQuiz />
+      <SimonSays />
     </div>
   )
 }
