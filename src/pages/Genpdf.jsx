@@ -38,7 +38,7 @@ const GenPDF = () => {
     }
   };
 
-  // Enhanced image loading with better quality
+  // Optimized image loading with controlled quality and size
   const loadImageBase64 = (path) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -46,14 +46,34 @@ const GenPDF = () => {
       img.crossOrigin = "Anonymous";
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        // Use higher resolution for better quality
-        const scale = 2;
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
+        
+        // Fixed dimensions for consistent file size - optimize for PDF
+        const maxWidth = 120;  // Reduced from variable scaling
+        const maxHeight = 120;
+        
+        // Calculate aspect ratio and resize
+        let { width, height } = img;
+        const aspectRatio = width / height;
+        
+        if (width > height) {
+          width = maxWidth;
+          height = maxWidth / aspectRatio;
+        } else {
+          height = maxHeight;
+          width = maxHeight * aspectRatio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
         const ctx = canvas.getContext("2d");
-        ctx.scale(scale, scale);
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL("image/png", 1.0));
+        // Optimize canvas rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'medium'; // Balance between quality and size
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Use moderate compression for smaller file size
+        resolve(canvas.toDataURL("image/jpeg", 0.7)); // Changed to JPEG with 70% quality
       };
       img.onerror = reject;
     });
@@ -103,38 +123,44 @@ const GenPDF = () => {
     return readingsByMeter;
   };
 
-  // Create high-quality chart with enhanced configuration
-  const createHighQualityChart = (canvas, type, data, options = {}) => {
+  // Optimized chart creation with controlled resolution and compression
+  const createOptimizedChart = (canvas, type, data, options = {}) => {
     return new Promise((resolve) => {
-      // Set high resolution canvas
-      const dpr = window.devicePixelRatio || 2;
-      canvas.width = 800 * dpr;
-      canvas.height = 400 * dpr;
-      canvas.style.width = '800px';
-      canvas.style.height = '400px';
+      // Fixed dimensions regardless of device pixel ratio to control file size
+      const chartWidth = 600;  // Reduced from 800
+      const chartHeight = 300; // Reduced from 400
+      
+      canvas.width = chartWidth;
+      canvas.height = chartHeight;
+      canvas.style.width = chartWidth + 'px';
+      canvas.style.height = chartHeight + 'px';
       
       const ctx = canvas.getContext('2d');
-      ctx.scale(dpr, dpr);
+      
+      // Optimize context settings for smaller file size
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'medium';
 
       const defaultOptions = {
         responsive: false,
         animation: false,
         maintainAspectRatio: false,
+        devicePixelRatio: 1, // Force to 1 to avoid high-DPI scaling
         plugins: {
           legend: {
             display: true,
             position: 'top',
             labels: {
-              font: { size: 12, weight: 'bold' },
+              font: { size: 11, weight: 'bold' }, // Slightly smaller fonts
               color: '#333'
             }
           },
           title: {
             display: options.title ? true : false,
             text: options.title || '',
-            font: { size: 16, weight: 'bold' },
+            font: { size: 14, weight: 'bold' }, // Reduced font size
             color: '#333',
-            padding: 20
+            padding: 15
           }
         },
         scales: type !== 'pie' && type !== 'doughnut' ? {
@@ -143,12 +169,13 @@ const GenPDF = () => {
             title: {
               display: true,
               text: options.xAxisLabel || 'Date',
-              font: { size: 12, weight: 'bold' }
+              font: { size: 10, weight: 'bold' }
             },
             ticks: {
-              font: { size: 10 },
+              font: { size: 9 }, // Smaller ticks
               maxRotation: 45,
-              minRotation: 0
+              minRotation: 0,
+              maxTicksLimit: 10 // Limit number of ticks to reduce complexity
             },
             grid: {
               color: '#e0e0e0',
@@ -160,10 +187,11 @@ const GenPDF = () => {
             title: {
               display: true,
               text: options.yAxisLabel || 'Reading',
-              font: { size: 12, weight: 'bold' }
+              font: { size: 10, weight: 'bold' }
             },
             ticks: {
-              font: { size: 10 }
+              font: { size: 9 },
+              maxTicksLimit: 8 // Limit y-axis ticks
             },
             grid: {
               color: '#e0e0e0',
@@ -180,11 +208,13 @@ const GenPDF = () => {
         options: { ...defaultOptions, ...options.chartOptions }
       });
 
-      // Wait for chart to render before resolving
+      // Wait for chart to render, then compress
       setTimeout(() => {
-        resolve(canvas.toDataURL('image/png', 1.0));
+        // Use JPEG compression for significantly smaller file size
+        const imageData = canvas.toDataURL('image/jpeg', 0.6); // 60% quality for balance
+        resolve(imageData);
         chart.destroy();
-      }, 500);
+      }, 300); // Reduced wait time
     });
   };
 
@@ -203,7 +233,7 @@ const GenPDF = () => {
     return colors[index % colors.length];
   };
 
-  // Add professional header with logo and metadata
+  // Add professional header with optimized logo
   const addProfessionalHeader = async (doc, title, subtitle = null) => {
     const pageWidth = doc.internal.pageSize.width;
     
@@ -211,11 +241,11 @@ const GenPDF = () => {
     doc.setFillColor(41, 128, 185);
     doc.rect(0, 0, pageWidth, 50, 'F');
     
-    // Load and add logo
+    // Load and add optimized logo
     try {
       const logoImage = await loadImageBase64('/vite.png');
-      // Add logo on the left side of header
-      doc.addImage(logoImage, 'PNG', 10, 10, 30, 30);
+      // Smaller logo size for reduced file size
+      doc.addImage(logoImage, 'JPEG', 10, 10, 25, 25, undefined, 'MEDIUM'); // Use JPEG compression
     } catch (e) {
       console.log('Logo not available:', e);
     }
@@ -224,12 +254,12 @@ const GenPDF = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text(title, 50, 25, { align: 'left' });
+    doc.text(title, 45, 25, { align: 'left' });
     
     if (subtitle) {
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text(subtitle, 50, 35, { align: 'left' });
+      doc.text(subtitle, 45, 35, { align: 'left' });
     }
     
     // Reset text color
@@ -249,7 +279,7 @@ const GenPDF = () => {
     doc.text(`Generated on: ${generatedDate}`, 20, pageHeight - 10);
   };
 
-  // Enhanced Detailed PDF with consumption analysis
+  // Enhanced Detailed PDF with consumption analysis - optimized for file size
   const generateDetailedPDF = async (e) => {
     e.preventDefault();
     setIsGenerating(true);
@@ -261,7 +291,7 @@ const GenPDF = () => {
         return;
       }
 
-      console.log('Starting detailed PDF generation...');
+      console.log('Starting optimized detailed PDF generation...');
       
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.width;
@@ -415,10 +445,10 @@ const GenPDF = () => {
 
               y = doc.lastAutoTable.finalY + 15;
 
-              // Add consumption trend chart for this meter
+              // Add optimized consumption trend chart for this meter
               if (consumptionData.length > 1) {
                 try {
-                  if (y + 100 > pageHeight - 30) {
+                  if (y + 80 > pageHeight - 30) { // Reduced space requirement
                     addFooter(doc, pageCount, '?', generatedDate);
                     doc.addPage();
                     pageCount++;
@@ -426,35 +456,40 @@ const GenPDF = () => {
                     y += 10;
                   }
 
-                  console.log(`Creating chart for meter ${meterId}...`);
+                  console.log(`Creating optimized chart for meter ${meterId}...`);
                   
                   const canvas = document.createElement('canvas');
                   const meterIndex = Object.keys(readingsByMeter).indexOf(meterId);
                   const color = getColorPalette(meterIndex);
 
+                  // Limit data points for better performance and smaller file size
+                  const maxDataPoints = 15;
+                  const dataStep = Math.max(1, Math.floor(consumptionData.length / maxDataPoints));
+                  const limitedData = consumptionData.filter((_, index) => index % dataStep === 0);
+
                   const chartData = {
-                    labels: consumptionData.slice(0, 20).map((row) => row[0]), // Limit to 20 points for readability
+                    labels: limitedData.map((row) => row[0]),
                     datasets: [{
-                      label: 'weekly Consumption',
-                      data: consumptionData.slice(0, 20).map((row) => parseFloat(row[3])),
+                      label: 'Weekly Consumption',
+                      data: limitedData.map((row) => parseFloat(row[3])),
                       borderColor: color.border,
                       backgroundColor: color.bg,
                       borderWidth: 2,
                       fill: true,
                       tension: 0.1,
-                      pointRadius: 2,
-                      pointHoverRadius: 4
+                      pointRadius: 1.5, // Smaller points
+                      pointHoverRadius: 3
                     }]
                   };
 
                   const chartOptions = {
-                    title: `weekly Consumption Pattern - Meter ${meterId}`,
+                    title: `Weekly Consumption Pattern - Meter ${meterId}`,
                     xAxisLabel: 'Date',
                     yAxisLabel: 'Units Consumed',
                     beginAtZero: true
                   };
 
-                  const chartImage = await createHighQualityChart(canvas, 'line', chartData, chartOptions);
+                  const chartImage = await createOptimizedChart(canvas, 'line', chartData, chartOptions);
                   
                   doc.setFontSize(12);
                   doc.setFont('helvetica', 'bold');
@@ -462,10 +497,11 @@ const GenPDF = () => {
                   doc.text(`Consumption Pattern - Meter ${meterId}`, 20, y);
                   y += 10;
                   
-                  doc.addImage(chartImage, 'PNG', 20, y, pageWidth - 40, 70);
-                  y += 85;
+                  // Add optimized chart with white background
+                  doc.addImage(chartImage, 'JPEG', 20, y, pageWidth - 40, 55, undefined, 'FAST');
+                  y += 70;
                   
-                  console.log(`Chart created successfully for meter ${meterId}`);
+                  console.log(`Optimized chart created successfully for meter ${meterId}`);
                 } catch (chartError) {
                   console.error(`Error creating chart for meter ${meterId}:`, chartError);
                   // Continue without chart
@@ -500,9 +536,9 @@ const GenPDF = () => {
       // Add final footer
       addFooter(doc, pageCount, pageCount, generatedDate);
 
-      console.log('Saving PDF...');
+      console.log('Saving optimized PDF...');
       doc.save(`detailed_consumption_report_${new Date().toISOString().split('T')[0]}.pdf`);
-      console.log('PDF saved successfully!');
+      console.log('Optimized PDF saved successfully!');
 
     } catch (error) {
       console.error('Error generating detailed PDF:', error);
