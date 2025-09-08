@@ -106,9 +106,12 @@ const GenPDF = () => {
   // Create high-quality chart with enhanced configuration  88888888888888888888888888888888888888888888888888888888
   const createHighQualityChart = (canvas, type, data, options = {}) => {
     return new Promise((resolve) => {
-      // Set consistent canvas size for all devices (independent of DPR)
-      const width = 800;
-      const height = 400;
+      // Dynamically size canvas (fit screen but max 800px)
+      const screenWidth = window.innerWidth || 800;
+      const width = Math.min(800, screenWidth - 20); // margin on sides
+      const height = Math.floor(width * 0.6); // 3:2 aspect ratio (good for charts)
+  
+      // Set both internal & CSS sizes
       canvas.width = width;
       canvas.height = height;
       canvas.style.width = width + "px";
@@ -116,61 +119,60 @@ const GenPDF = () => {
   
       const ctx = canvas.getContext("2d");
   
-      const defaultOptions = {
-        responsive: false,
-        animation: false,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            position: "top",
-            labels: {
-              font: { size: 10, weight: "bold" },
-              color: "#333",
-            },
-          },
-          title: {
-            display: options.title ? true : false,
-            text: options.title || "",
-            font: { size: 14, weight: "bold" },
-            color: "#333",
-            padding: 15,
-          },
-        },
-        scales:
-          type !== "pie" && type !== "doughnut"
-            ? {
-                x: {
-                  title: { display: true, text: options.xAxisLabel || "Date" },
-                  ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 0 },
-                },
-                y: {
-                  title: { display: true, text: options.yAxisLabel || "Reading" },
-                  ticks: { font: { size: 9 } },
-                  beginAtZero: options.beginAtZero !== false,
-                },
-              }
-            : {},
-      };
-  
       const chart = new Chart(ctx, {
         type: type,
         data: data,
-        options: { ...defaultOptions, ...options.chartOptions },
+        options: {
+          responsive: false,          // force fixed size
+          maintainAspectRatio: false, // respect our width/height
+          animation: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: "top",
+              labels: {
+                font: { size: 9, weight: "bold" },
+                color: "#333",
+              },
+            },
+            title: {
+              display: !!options.title,
+              text: options.title || "",
+              font: { size: 12, weight: "bold" },
+              color: "#333",
+              padding: 10,
+            },
+          },
+          scales:
+            type !== "pie" && type !== "doughnut"
+              ? {
+                  x: {
+                    title: { display: true, text: options.xAxisLabel || "Date" },
+                    ticks: { font: { size: 8 }, maxRotation: 45 },
+                  },
+                  y: {
+                    title: { display: true, text: options.yAxisLabel || "Reading" },
+                    ticks: { font: { size: 8 } },
+                    beginAtZero: options.beginAtZero !== false,
+                  },
+                }
+              : {},
+        },
       });
   
-      // Wait for chart render
+      // Export after render
       setTimeout(() => {
-        // Force white background (no black issue)
+        // Create export canvas with same size
         const exportCanvas = document.createElement("canvas");
         exportCanvas.width = width;
         exportCanvas.height = height;
-        const exportCtx = exportCanvas.getContext("2d");
-        exportCtx.fillStyle = "#ffffff";
-        exportCtx.fillRect(0, 0, width, height);
-        exportCtx.drawImage(canvas, 0, 0);
   
-        // Export as JPEG (compressed)
+        const exportCtx = exportCanvas.getContext("2d");
+        exportCtx.fillStyle = "#ffffff"; // white background
+        exportCtx.fillRect(0, 0, width, height);
+        exportCtx.drawImage(canvas, 0, 0, width, height);
+  
+        // JPEG compression
         const chartImage = exportCanvas.toDataURL("image/jpeg", 0.7);
   
         resolve(chartImage);
@@ -179,7 +181,6 @@ const GenPDF = () => {
     });
   };
   
-
   // Enhanced color palette
   const getColorPalette = (index) => {
     const colors = [
