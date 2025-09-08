@@ -313,10 +313,10 @@ const GenPDF = () => {
           // Calculate consumption data with better error handling
           let consumptionData = [];
           let totalUnits = 0;
-          let maxDaily = 0;
-          let minDaily = Infinity;
+          let maxweekly = 0;
+          let minweekly = Infinity;
           let validReadings = 0;
-          let avgDaily = 0;
+          let avgweekly = 0;
 
           // Sort data by date to ensure proper calculation
           const sortedData = data.sort((a, b) => a.date - b.date);
@@ -340,8 +340,8 @@ const GenPDF = () => {
                 ]);
                 
                 totalUnits += units;
-                maxDaily = Math.max(maxDaily, units);
-                minDaily = Math.min(minDaily, units);
+                maxweekly = Math.max(maxweekly, units);
+                minweekly = Math.min(minweekly, units);
                 validReadings++;
               }
             } catch (err) {
@@ -350,7 +350,7 @@ const GenPDF = () => {
           }
 
           if (validReadings > 0) {
-            avgDaily = totalUnits / validReadings;
+            avgweekly = totalUnits / validReadings;
             
             // Consumption statistics box
             doc.setFillColor(252, 248, 227);
@@ -363,7 +363,7 @@ const GenPDF = () => {
             
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(0, 0, 0);
-            doc.text(`Total: ${totalUnits.toFixed(2)} units | Average: ${avgDaily.toFixed(2)} units/reading | Range: ${minDaily.toFixed(2)} - ${maxDaily.toFixed(2)} units`, 25, y + 16);
+            doc.text(`Total: ${totalUnits.toFixed(2)} units | Average: ${avgweekly.toFixed(2)} units/reading | Range: ${minweekly.toFixed(2)} - ${maxweekly.toFixed(2)} units`, 25, y + 16);
             
             y += 35;
           }
@@ -400,9 +400,9 @@ const GenPDF = () => {
                     if (data.column.index === 3 && data.cell.text[0] !== 'Units Consumed' && validReadings > 0) {
                       const value = parseFloat(data.cell.text[0]);
                       if (!isNaN(value)) {
-                        if (value > avgDaily * 1.5) {
+                        if (value > avgweekly * 1.5) {
                           data.cell.styles.textColor = [220, 53, 69]; // Red for high consumption
-                        } else if (value < avgDaily * 0.5 && value > 0) {
+                        } else if (value < avgweekly * 0.5 && value > 0) {
                           data.cell.styles.textColor = [40, 167, 69]; // Green for low consumption
                         }
                       }
@@ -435,7 +435,7 @@ const GenPDF = () => {
                   const chartData = {
                     labels: consumptionData.slice(0, 20).map((row) => row[0]), // Limit to 20 points for readability
                     datasets: [{
-                      label: 'Weekly Consumption',
+                      label: 'weekly Consumption',
                       data: consumptionData.slice(0, 20).map((row) => parseFloat(row[3])),
                       borderColor: color.border,
                       backgroundColor: color.bg,
@@ -448,7 +448,7 @@ const GenPDF = () => {
                   };
 
                   const chartOptions = {
-                    title: `Weekly Consumption Pattern - Meter ${meterId}`,
+                    title: `weekly Consumption Pattern - Meter ${meterId}`,
                     xAxisLabel: 'Date',
                     yAxisLabel: 'Units Consumed',
                     beginAtZero: true
@@ -527,7 +527,7 @@ const GenPDF = () => {
           </div>
           <div className="ml-3">
             <p className="text-sm text-green-700">
-              <strong>Detailed Analysis Features:</strong> Granular consumption breakdown, Weekly usage patterns, detailed tables with all readings, and usage anomaly highlighting.
+              <strong>Detailed Analysis Features:</strong> Granular consumption breakdown, weekly usage patterns, detailed tables with all readings, and usage anomaly highlighting.
             </p>
           </div>
         </div>
@@ -615,7 +615,7 @@ const GenPDF = () => {
                 <h4 className="font-semibold text-green-700 mb-2">📊 Data Analysis</h4>
                 <ul className="text-sm text-green-600 space-y-1">
                   <li>• Granular consumption breakdown</li>
-                  <li>• Weekly usage patterns and trends</li>
+                  <li>• weekly usage patterns and trends</li>
                   <li>• Consumption statistics per meter</li>
                   <li>• Usage anomaly highlighting</li>
                 </ul>
@@ -648,6 +648,5 @@ const GenPDF = () => {
     </div>
   );
 };
-
 
 export default GenPDF;
