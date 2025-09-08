@@ -1,222 +1,17 @@
-// import React, { useState, useEffect } from "react";
-// import { jsPDF } from "jspdf";
-// import "jspdf-autotable";
-// import { db } from "../firebase"; // Import db from your firebase.js file
-// import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
-// import { getAuth } from "firebase/auth"; // To access authentication
-
-// const GenPDF = () => {
-//   const [meterIds, setMeterIds] = useState([]);
-//   const [fromDate, setFromDate] = useState("");
-//   const [toDate, setToDate] = useState("");
-//   const [selectedMeterIds, setSelectedMeterIds] = useState([]);
-
-//   useEffect(() => {
-//     fetchMeterIds();
-//   }, []);
-
-//   // Fetch meter IDs for the current user from Firestore
-//   const fetchMeterIds = async () => {
-//     const auth = getAuth();
-//     const user = auth.currentUser;
-
-//     if (user) {
-//       const readingsRef = collection(db, "readings");
-//       const q = query(
-//         readingsRef,
-//         where("uid", "==", user.uid), // Filter by user ID
-//         orderBy("meterId", "asc") // Use indexed order
-//       );
-//       const readingsSnapshot = await getDocs(q);
-//       let meterIdsSet = new Set();
-
-//       readingsSnapshot.forEach((doc) => {
-//         meterIdsSet.add(doc.data().meterId); // Add unique meterId for the current user
-//       });
-//       setMeterIds([...meterIdsSet]);
-//     } else {
-//       console.error("No user is logged in.");
-//     }
-//   };
-
-//   // Generate PDF
-//   const generatePDF = async (e) => {
-//     e.preventDefault();
-
-//     if (!fromDate || !toDate || selectedMeterIds.length === 0) {
-//       alert("Please select meter IDs and dates.");
-//       return;
-//     }
-
-//     const doc = new jsPDF();
-//     const pageWidth = doc.internal.pageSize.width;
-//     const pageHeight = doc.internal.pageSize.height;
-//     const logo = "/vite.PNG"; // Path to your logo
-
-//     let y = 50; // Starting y-coordinate after logo
-
-//     // Function to add the logo on every page
-//     const addHeaderLogo = () => {
-//       doc.addImage(logo, "PNG", pageWidth / 2 - 25, 10, 50, 30); // Center logo (50x30)
-//     };
-
-//     // Add logo to the first page
-//     addHeaderLogo();
-
-//     const auth = getAuth();
-//     const user = auth.currentUser;
-
-//     if (user) {
-//       const readingsRef = collection(db, "readings");
-//       const q = query(
-//         readingsRef,
-//         where("uid", "==", user.uid), // Filter by user ID
-//         where("meterId", "in", selectedMeterIds), // Filter by selected meter IDs
-//         orderBy("meterId", "asc"), // Match index
-//         orderBy("readingDate", "asc") // Match index
-//       );
-//       const querySnapshot = await getDocs(q);
-
-//       let readingsByMeter = {};
-
-//       querySnapshot.forEach((doc) => {
-//         const data = doc.data();
-//         const readingDate = new Date(data.readingDate);
-
-//         // Only include readings within the selected date range
-//         if (
-//           readingDate >= new Date(fromDate) &&
-//           readingDate <= new Date(toDate)
-//         ) {
-//           if (!readingsByMeter[data.meterId]) {
-//             readingsByMeter[data.meterId] = [];
-//           }
-//           readingsByMeter[data.meterId].push({
-//             date: readingDate.toDateString(),
-//             reading: data.reading,
-//           });
-//         }
-//       });
-
-//       // Generate the PDF with readings
-//       Object.keys(readingsByMeter).forEach((meterId) => {
-//         if (y + 20 > pageHeight - 20) {
-//           doc.addPage();
-//           addHeaderLogo(); // Add logo to the new page
-//           y = 50; // Reset y-coordinate for the new page
-//         }
-//         doc.text(`Meter ID: ${meterId}`, 20, y);
-//         y += 10;
-
-//         const tableData = readingsByMeter[meterId].map((entry) => [
-//           entry.date,
-//           entry.reading,
-//         ]);
-
-//         if (tableData.length === 0) {
-//           doc.text(
-//             "No readings available for the selected date range.",
-//             20,
-//             y
-//           );
-//           y += 10;
-//         } else {
-//           doc.autoTable({
-//             head: [["Date", "Reading"]],
-//             body: tableData,
-//             startY: y,
-//             theme: "striped",
-//           });
-//           y = doc.autoTable.previous.finalY + 10;
-//         }
-//       });
-
-//       doc.save("readings_report.pdf");
-//     } else {
-//       console.error("No user is logged in.");
-//     }
-//   };
-
-//   return (
-//     <div className="container mx-auto p-6 bg-white shadow-lg rounded-lg max-w-2xl">
-//       <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">Generate PDF of History Readings</h1>
-//       <form onSubmit={generatePDF} className="space-y-4">
-//         <div>
-//           <label htmlFor="pdfMeterIds" className="block text-gray-700 font-medium">Meter IDs:</label>
-//           <select
-//             id="pdfMeterIds"
-//             multiple
-//             value={selectedMeterIds}
-//             onChange={(e) =>
-//               setSelectedMeterIds(
-//                 Array.from(e.target.selectedOptions, (option) => option.value)
-//               )
-//             }
-//             required
-//             className="mt-2 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           >
-//             {meterIds.map((meterId) => (
-//               <option key={meterId} value={meterId}>
-//                 {meterId}
-//               </option>
-//             ))}
-//           </select>
-//         </div>
-
-//         <div>
-//           <label htmlFor="pdfFromDate" className="block text-gray-700 font-medium">From Date:</label>
-//           <input
-//             type="date"
-//             id="pdfFromDate"
-//             value={fromDate}
-//             onChange={(e) => setFromDate(e.target.value)}
-//             required
-//             className="mt-2 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           />
-//         </div>
-
-//         <div>
-//           <label htmlFor="pdfToDate" className="block text-gray-700 font-medium">To Date:</label>
-//           <input
-//             type="date"
-//             id="pdfToDate"
-//             value={toDate}
-//             onChange={(e) => setToDate(e.target.value)}
-//             required
-//             className="mt-2 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           />
-//         </div>
-
-//         <div className="text-center">
-//           <button
-//             type="submit"
-//             className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           >
-//             Generate PDF
-//           </button>
-//         </div>
-//       </form>
-//     </div>
-//   );
-// };
-
-// export default GenPDF;
-
-
-
-
 import React, { useState, useEffect } from "react";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-import { db } from "../firebase"; // Import db from your firebase.js file
+import { db } from "../firebase";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
-import { getAuth } from "firebase/auth"; // To access authentication
+import { getAuth } from "firebase/auth";
+import Chart from "chart.js/auto";
 
 const GenPDF = () => {
   const [meterIds, setMeterIds] = useState([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [selectedMeterIds, setSelectedMeterIds] = useState([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     fetchMeterIds();
@@ -240,117 +35,510 @@ const GenPDF = () => {
         meterIdsSet.add(doc.data().meterId);
       });
       setMeterIds([...meterIdsSet]);
-    } else {
-      console.error("No user is logged in.");
     }
   };
 
-  const generatePDF = async (e) => {
-    e.preventDefault();
+  // Enhanced image loading with better quality
+  const loadImageBase64 = (path) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = path;
+      img.crossOrigin = "Anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        // Use higher resolution for better quality
+        const scale = 2;
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png", 1.0));
+      };
+      img.onerror = reject;
+    });
+  };
 
-    if (!fromDate || !toDate || selectedMeterIds.length === 0) {
-      alert("Please select meter IDs and dates.");
-      return;
-    }
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
-    const logo = "/vite.PNG";
-
-    let y = 50;
-
-    const addHeaderLogo = () => {
-      doc.addImage(logo, "PNG", pageWidth / 2 - 25, 10, 50, 30);
-    };
-
-    addHeaderLogo();
-
+  // Enhanced data fetching with better sorting
+  const fetchReadingsData = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
 
-    if (user) {
-      const readingsRef = collection(db, "readings");
-      const q = query(
-        readingsRef,
-        where("uid", "==", user.uid),
-        where("meterId", "in", selectedMeterIds),
-        orderBy("meterId", "asc"),
-        orderBy("readingDate", "asc")
-      );
-      const querySnapshot = await getDocs(q);
+    if (!user) return {};
 
-      let readingsByMeter = {};
+    const readingsRef = collection(db, "readings");
+    const q = query(
+      readingsRef,
+      where("uid", "==", user.uid),
+      where("meterId", "in", selectedMeterIds),
+      orderBy("meterId", "asc"),
+      orderBy("readingDate", "asc")
+    );
+    const querySnapshot = await getDocs(q);
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const readingDate = new Date(data.readingDate);
+    let readingsByMeter = {};
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const readingDate = new Date(data.readingDate);
 
-        if (
-          readingDate >= new Date(fromDate) &&
-          readingDate <= new Date(toDate)
-        ) {
-          if (!readingsByMeter[data.meterId]) {
-            readingsByMeter[data.meterId] = [];
+      if (
+        readingDate >= new Date(fromDate) &&
+        readingDate <= new Date(toDate)
+      ) {
+        if (!readingsByMeter[data.meterId]) readingsByMeter[data.meterId] = [];
+        readingsByMeter[data.meterId].push({
+          date: readingDate,
+          dateString: readingDate.toLocaleDateString('en-GB'),
+          reading: parseFloat(data.reading) || 0,
+          rawData: data
+        });
+      }
+    });
+
+    // Sort readings by date for each meter
+    Object.keys(readingsByMeter).forEach(meterId => {
+      readingsByMeter[meterId].sort((a, b) => a.date - b.date);
+    });
+
+    return readingsByMeter;
+  };
+
+  // Create high-quality chart with enhanced configuration
+  const createHighQualityChart = (canvas, type, data, options = {}) => {
+    return new Promise((resolve) => {
+      // Set high resolution canvas
+      const dpr = window.devicePixelRatio || 2;
+      canvas.width = 800 * dpr;
+      canvas.height = 400 * dpr;
+      canvas.style.width = '800px';
+      canvas.style.height = '400px';
+      
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const defaultOptions = {
+        responsive: false,
+        animation: false,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              font: { size: 12, weight: 'bold' },
+              color: '#333'
+            }
+          },
+          title: {
+            display: options.title ? true : false,
+            text: options.title || '',
+            font: { size: 16, weight: 'bold' },
+            color: '#333',
+            padding: 20
           }
-          readingsByMeter[data.meterId].push({
-            date: readingDate.toDateString(),
-            reading: data.reading,
-          });
-        }
+        },
+        scales: type !== 'pie' && type !== 'doughnut' ? {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: options.xAxisLabel || 'Date',
+              font: { size: 12, weight: 'bold' }
+            },
+            ticks: {
+              font: { size: 10 },
+              maxRotation: 45,
+              minRotation: 0
+            },
+            grid: {
+              color: '#e0e0e0',
+              lineWidth: 0.5
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: options.yAxisLabel || 'Reading',
+              font: { size: 12, weight: 'bold' }
+            },
+            ticks: {
+              font: { size: 10 }
+            },
+            grid: {
+              color: '#e0e0e0',
+              lineWidth: 0.5
+            },
+            beginAtZero: options.beginAtZero !== false
+          }
+        } : {}
+      };
+
+      const chart = new Chart(ctx, {
+        type: type,
+        data: data,
+        options: { ...defaultOptions, ...options.chartOptions }
       });
 
-      Object.keys(readingsByMeter).forEach((meterId) => {
-        if (y + 20 > pageHeight - 20) {
-          doc.addPage();
-          addHeaderLogo();
-          y = 50;
+      // Wait for chart to render before resolving
+      setTimeout(() => {
+        resolve(canvas.toDataURL('image/png', 1.0));
+        chart.destroy();
+      }, 500);
+    });
+  };
+
+  // Enhanced color palette
+  const getColorPalette = (index) => {
+    const colors = [
+      { bg: 'rgba(54, 162, 235, 0.2)', border: 'rgb(54, 162, 235)' },
+      { bg: 'rgba(255, 99, 132, 0.2)', border: 'rgb(255, 99, 132)' },
+      { bg: 'rgba(75, 192, 192, 0.2)', border: 'rgb(75, 192, 192)' },
+      { bg: 'rgba(255, 206, 86, 0.2)', border: 'rgb(255, 206, 86)' },
+      { bg: 'rgba(153, 102, 255, 0.2)', border: 'rgb(153, 102, 255)' },
+      { bg: 'rgba(255, 159, 64, 0.2)', border: 'rgb(255, 159, 64)' },
+      { bg: 'rgba(199, 199, 199, 0.2)', border: 'rgb(199, 199, 199)' },
+      { bg: 'rgba(83, 102, 255, 0.2)', border: 'rgb(83, 102, 255)' }
+    ];
+    return colors[index % colors.length];
+  };
+
+  // Add professional header with logo and metadata
+  const addProfessionalHeader = async (doc, title, subtitle = null) => {
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Header background
+    doc.setFillColor(41, 128, 185);
+    doc.rect(0, 0, pageWidth, 50, 'F');
+    
+    // Load and add logo
+    try {
+      const logoImage = await loadImageBase64('/vite.png');
+      // Add logo on the left side of header
+      doc.addImage(logoImage, 'PNG', 10, 10, 30, 30);
+    } catch (e) {
+      console.log('Logo not available:', e);
+    }
+    
+    // Title - positioned to the right of logo
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, 50, 25, { align: 'left' });
+    
+    if (subtitle) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(subtitle, 50, 35, { align: 'left' });
+    }
+    
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+    
+    return 60; // Return Y position after header
+  };
+
+  // Add footer with page numbers and generation info
+  const addFooter = (doc, pageNum, totalPages, generatedDate) => {
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    
+    doc.setFontSize(8);
+    doc.setTextColor(128, 128, 128);
+    doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
+    doc.text(`Generated on: ${generatedDate}`, 20, pageHeight - 10);
+  };
+
+  // Enhanced Detailed PDF with consumption analysis
+  const generateDetailedPDF = async (e) => {
+    e.preventDefault();
+    setIsGenerating(true);
+
+    try {
+      if (!fromDate || !toDate || selectedMeterIds.length === 0) {
+        alert("Please select meter IDs and dates.");
+        setIsGenerating(false);
+        return;
+      }
+
+      console.log('Starting detailed PDF generation...');
+      
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      const generatedDate = new Date().toLocaleString();
+      let pageCount = 1;
+
+      let y = await addProfessionalHeader(
+        doc, 
+        'Detailed Consumption Analysis Report',
+        `Period: ${new Date(fromDate).toLocaleDateString()} - ${new Date(toDate).toLocaleDateString()}`
+      );
+
+      console.log('Fetching readings data...');
+      const readingsByMeter = await fetchReadingsData();
+      
+      if (!readingsByMeter || Object.keys(readingsByMeter).length === 0) {
+        throw new Error('No data found for the selected criteria');
+      }
+
+      console.log('Processing meters:', Object.keys(readingsByMeter));
+
+      for (let meterId of Object.keys(readingsByMeter)) {
+        try {
+          const data = readingsByMeter[meterId];
+          
+          if (!data || data.length === 0) {
+            console.log(`No data for meter ${meterId}, skipping...`);
+            continue;
+          }
+
+          console.log(`Processing meter ${meterId} with ${data.length} readings`);
+          
+          if (y + 100 > pageHeight - 30) {
+            addFooter(doc, pageCount, '?', generatedDate);
+            doc.addPage();
+            pageCount++;
+            y = await addProfessionalHeader(doc, 'Detailed Consumption Analysis (Continued)');
+            y += 10;
+          }
+
+          // Meter header
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(41, 128, 185);
+          doc.text(`Meter ${meterId} - Detailed Consumption Breakdown`, 20, y);
+          y += 15;
+
+          // Calculate consumption data with better error handling
+          let consumptionData = [];
+          let totalUnits = 0;
+          let maxDaily = 0;
+          let minDaily = Infinity;
+          let validReadings = 0;
+          let avgDaily = 0;
+
+          // Sort data by date to ensure proper calculation
+          const sortedData = data.sort((a, b) => a.date - b.date);
+
+          for (let i = 1; i < sortedData.length; i++) {
+            try {
+              const prevReading = parseFloat(sortedData[i - 1].reading) || 0;
+              const currReading = parseFloat(sortedData[i].reading) || 0;
+              const units = currReading - prevReading;
+              
+              // Only include positive consumption (handle meter resets)
+              if (units >= 0 && units < 10000) { // Reasonable upper limit to filter out meter resets
+                const changePercentage = prevReading > 0 ? ((units / prevReading) * 100) : 0;
+                
+                consumptionData.push([
+                  sortedData[i].dateString || sortedData[i].date.toLocaleDateString(),
+                  prevReading.toFixed(2),
+                  currReading.toFixed(2),
+                  units.toFixed(2),
+                  changePercentage.toFixed(1) + '%'
+                ]);
+                
+                totalUnits += units;
+                maxDaily = Math.max(maxDaily, units);
+                minDaily = Math.min(minDaily, units);
+                validReadings++;
+              }
+            } catch (err) {
+              console.warn(`Error processing reading ${i} for meter ${meterId}:`, err);
+            }
+          }
+
+          if (validReadings > 0) {
+            avgDaily = totalUnits / validReadings;
+            
+            // Consumption statistics box
+            doc.setFillColor(252, 248, 227);
+            doc.roundedRect(20, y, pageWidth - 40, 25, 2, 2, 'F');
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(133, 100, 4);
+            doc.text('Consumption Summary:', 25, y + 8);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Total: ${totalUnits.toFixed(2)} units | Average: ${avgDaily.toFixed(2)} units/reading | Range: ${minDaily.toFixed(2)} - ${maxDaily.toFixed(2)} units`, 25, y + 16);
+            
+            y += 35;
+          }
+
+          // Detailed consumption table
+          if (consumptionData.length > 0) {
+            try {
+              doc.autoTable({
+                head: [['Date', 'Previous Reading', 'Current Reading', 'Units Consumed', 'Change %']],
+                body: consumptionData,
+                startY: y,
+                styles: {
+                  fontSize: 8,
+                  cellPadding: 2
+                },
+                headStyles: {
+                  fillColor: [41, 128, 185],
+                  textColor: 255,
+                  fontSize: 9,
+                  fontStyle: 'bold'
+                },
+                alternateRowStyles: {
+                  fillColor: [248, 249, 250]
+                },
+                columnStyles: {
+                  0: { halign: 'center' },
+                  1: { halign: 'right' },
+                  2: { halign: 'right' },
+                  3: { halign: 'right', fontStyle: 'bold' },
+                  4: { halign: 'center' }
+                },
+                didParseCell: (data) => {
+                  try {
+                    if (data.column.index === 3 && data.cell.text[0] !== 'Units Consumed' && validReadings > 0) {
+                      const value = parseFloat(data.cell.text[0]);
+                      if (!isNaN(value)) {
+                        if (value > avgDaily * 1.5) {
+                          data.cell.styles.textColor = [220, 53, 69]; // Red for high consumption
+                        } else if (value < avgDaily * 0.5 && value > 0) {
+                          data.cell.styles.textColor = [40, 167, 69]; // Green for low consumption
+                        }
+                      }
+                    }
+                  } catch (err) {
+                    console.warn('Error in didParseCell:', err);
+                  }
+                }
+              });
+
+              y = doc.lastAutoTable.finalY + 15;
+
+              // Add consumption trend chart for this meter
+              if (consumptionData.length > 1) {
+                try {
+                  if (y + 100 > pageHeight - 30) {
+                    addFooter(doc, pageCount, '?', generatedDate);
+                    doc.addPage();
+                    pageCount++;
+                    y = await addProfessionalHeader(doc, 'Detailed Consumption Analysis (Continued)');
+                    y += 10;
+                  }
+
+                  console.log(`Creating chart for meter ${meterId}...`);
+                  
+                  const canvas = document.createElement('canvas');
+                  const meterIndex = Object.keys(readingsByMeter).indexOf(meterId);
+                  const color = getColorPalette(meterIndex);
+
+                  const chartData = {
+                    labels: consumptionData.slice(0, 20).map((row) => row[0]), // Limit to 20 points for readability
+                    datasets: [{
+                      label: 'Daily Consumption',
+                      data: consumptionData.slice(0, 20).map((row) => parseFloat(row[3])),
+                      borderColor: color.border,
+                      backgroundColor: color.bg,
+                      borderWidth: 2,
+                      fill: true,
+                      tension: 0.1,
+                      pointRadius: 2,
+                      pointHoverRadius: 4
+                    }]
+                  };
+
+                  const chartOptions = {
+                    title: `Daily Consumption Pattern - Meter ${meterId}`,
+                    xAxisLabel: 'Date',
+                    yAxisLabel: 'Units Consumed',
+                    beginAtZero: true
+                  };
+
+                  const chartImage = await createHighQualityChart(canvas, 'line', chartData, chartOptions);
+                  
+                  doc.setFontSize(12);
+                  doc.setFont('helvetica', 'bold');
+                  doc.setTextColor(52, 73, 94);
+                  doc.text(`Consumption Pattern - Meter ${meterId}`, 20, y);
+                  y += 10;
+                  
+                  doc.addImage(chartImage, 'PNG', 20, y, pageWidth - 40, 70);
+                  y += 85;
+                  
+                  console.log(`Chart created successfully for meter ${meterId}`);
+                } catch (chartError) {
+                  console.error(`Error creating chart for meter ${meterId}:`, chartError);
+                  // Continue without chart
+                  doc.setTextColor(255, 165, 0);
+                  doc.setFontSize(10);
+                  doc.text(`⚠️ Chart could not be generated for meter ${meterId}`, 20, y);
+                  y += 15;
+                }
+              }
+            } catch (tableError) {
+              console.error(`Error creating table for meter ${meterId}:`, tableError);
+              doc.setTextColor(220, 53, 69);
+              doc.setFontSize(10);
+              doc.text(`⚠️ Error processing consumption data for meter ${meterId}`, 20, y);
+              y += 15;
+            }
+          } else {
+            doc.setTextColor(220, 53, 69);
+            doc.setFontSize(10);
+            doc.text(`⚠️ No valid consumption data available for meter ${meterId} in the selected period.`, 20, y);
+            y += 15;
+          }
+        } catch (meterError) {
+          console.error(`Error processing meter ${meterId}:`, meterError);
+          doc.setTextColor(220, 53, 69);
+          doc.setFontSize(10);
+          doc.text(`⚠️ Error processing meter ${meterId}: ${meterError.message}`, 20, y);
+          y += 15;
         }
-        doc.text(`Meter ID: ${meterId}`, 20, y);
-        y += 10;
+      }
 
-        const tableData = readingsByMeter[meterId].map((entry) => [
-          entry.date,
-          entry.reading,
-        ]);
+      // Add final footer
+      addFooter(doc, pageCount, pageCount, generatedDate);
 
-        if (tableData.length === 0) {
-          doc.text(
-            "No readings available for the selected date range.",
-            20,
-            y
-          );
-          y += 10;
-        } else {
-          doc.autoTable({
-            head: [["Date", "Reading"]],
-            body: tableData,
-            startY: y,
-            theme: "striped",
-          });
-          y = doc.autoTable.previous.finalY + 10;
-        }
-      });
+      console.log('Saving PDF...');
+      doc.save(`detailed_consumption_report_${new Date().toISOString().split('T')[0]}.pdf`);
+      console.log('PDF saved successfully!');
 
-      doc.save("readings_report.pdf");
-    } else {
-      console.error("No user is logged in.");
+    } catch (error) {
+      console.error('Error generating detailed PDF:', error);
+      alert(`Error generating detailed PDF: ${error.message}. Please check your data and try again.`);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
   return (
     <div className="container mx-auto p-8 bg-white shadow-xl rounded-lg max-w-2xl">
-      <h1 className="text-4xl font-extrabold text-center text-blue-600 mb-8">Generate Readings PDF</h1>
-      <form onSubmit={generatePDF} className="space-y-6">
+      <h1 className="text-4xl font-extrabold text-center text-blue-600 mb-8">
+        📊 Generate Detailed Consumption Report
+      </h1>
+      
+      <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-green-700">
+              <strong>Detailed Analysis Features:</strong> Granular consumption breakdown, daily usage patterns, detailed tables with all readings, and usage anomaly highlighting.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <form className="space-y-6">
         <div>
-          <label
-            htmlFor="pdfMeterIds"
-            className="block text-lg text-gray-700 font-semibold"
-          >
-            Select Meter IDs:
+          <label className="block text-lg text-gray-700 font-semibold mb-2">
+            📋 Select Meter IDs:
           </label>
           <select
-            id="pdfMeterIds"
             multiple
             value={selectedMeterIds}
             onChange={(e) =>
@@ -358,55 +546,103 @@ const GenPDF = () => {
                 Array.from(e.target.selectedOptions, (option) => option.value)
               )
             }
-            className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[120px]"
           >
             {meterIds.map((meterId) => (
               <option key={meterId} value={meterId}>
-                {meterId}
+                📊 Meter {meterId}
               </option>
             ))}
           </select>
+          <p className="text-sm text-gray-600 mt-1">Hold Ctrl/Cmd to select multiple meters</p>
         </div>
 
-        <div>
-          <label
-            htmlFor="pdfFromDate"
-            className="block text-lg text-gray-700 font-semibold"
-          >
-            From Date:
-          </label>
-          <input
-            type="date"
-            id="pdfFromDate"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-lg text-gray-700 font-semibold mb-2">
+              📅 From Date:
+            </label>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-lg text-gray-700 font-semibold mb-2">
+              📅 To Date:
+            </label>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
         </div>
 
-        <div>
-          <label
-            htmlFor="pdfToDate"
-            className="block text-lg text-gray-700 font-semibold"
-          >
-            To Date:
-          </label>
-          <input
-            type="date"
-            id="pdfToDate"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="text-center">
+        <div className="flex justify-center">
           <button
-            type="submit"
-            className="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow focus:outline-none focus:ring-4 focus:ring-blue-400"
+            onClick={generateDetailedPDF}
+            disabled={isGenerating}
+            className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:from-green-700 hover:to-green-800 shadow-lg focus:outline-none focus:ring-4 focus:ring-green-400 transform transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            Generate PDF
+            {isGenerating ? '🔄 Processing...' : '📈 Generate Detailed Report'}
           </button>
+        </div>
+
+        {/* Progress indicator */}
+        {isGenerating && (
+          <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mr-3"></div>
+              <div className="text-sm text-gray-700">
+                <p className="font-medium">Generating detailed consumption analysis report...</p>
+                <p className="text-gray-500">This may take a few moments for optimal chart rendering and data processing.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Report features */}
+        <div className="mt-8">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+            <h3 className="text-xl font-bold text-green-800 mb-4">📈 What's Included in Your Report:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-semibold text-green-700 mb-2">📊 Data Analysis</h4>
+                <ul className="text-sm text-green-600 space-y-1">
+                  <li>• Granular consumption breakdown</li>
+                  <li>• Daily usage patterns and trends</li>
+                  <li>• Consumption statistics per meter</li>
+                  <li>• Usage anomaly highlighting</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-green-700 mb-2">🎨 Visual Features</h4>
+                <ul className="text-sm text-green-600 space-y-1">
+                  <li>• Professional header with company logo</li>
+                  <li>• High-quality consumption charts</li>
+                  <li>• Detailed tables with all readings</li>
+                  <li>• Color-coded consumption indicators</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Usage tips */}
+        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="text-md font-bold text-yellow-800 mb-2">💡 Usage Tips:</h4>
+          <ul className="text-sm text-yellow-700 space-y-1">
+            <li>• Select multiple meters for comprehensive analysis</li>
+            <li>• Choose appropriate date ranges for meaningful insights</li>
+            <li>• Report includes your company logo automatically</li>
+            <li>• All charts are rendered in high-quality for printing</li>
+            <li>• Perfect for operational review and audit purposes</li>
+          </ul>
         </div>
       </form>
     </div>
