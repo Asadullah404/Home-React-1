@@ -435,7 +435,7 @@ const GenPDF = () => {
                   const chartData = {
                     labels: consumptionData.slice(0, 20).map((row) => row[0]), // Limit to 20 points for readability
                     datasets: [{
-                      label: 'Daily Consumption',
+                      label: 'Weekly Consumption',
                       data: consumptionData.slice(0, 20).map((row) => parseFloat(row[3])),
                       borderColor: color.border,
                       backgroundColor: color.bg,
@@ -448,7 +448,7 @@ const GenPDF = () => {
                   };
 
                   const chartOptions = {
-                    title: `Daily Consumption Pattern - Meter ${meterId}`,
+                    title: `Weekly Consumption Pattern - Meter ${meterId}`,
                     xAxisLabel: 'Date',
                     yAxisLabel: 'Units Consumed',
                     beginAtZero: true
@@ -527,7 +527,7 @@ const GenPDF = () => {
           </div>
           <div className="ml-3">
             <p className="text-sm text-green-700">
-              <strong>Detailed Analysis Features:</strong> Granular consumption breakdown, daily usage patterns, detailed tables with all readings, and usage anomaly highlighting.
+              <strong>Detailed Analysis Features:</strong> Granular consumption breakdown, Weekly usage patterns, detailed tables with all readings, and usage anomaly highlighting.
             </p>
           </div>
         </div>
@@ -615,7 +615,7 @@ const GenPDF = () => {
                 <h4 className="font-semibold text-green-700 mb-2">📊 Data Analysis</h4>
                 <ul className="text-sm text-green-600 space-y-1">
                   <li>• Granular consumption breakdown</li>
-                  <li>• Daily usage patterns and trends</li>
+                  <li>• Weekly usage patterns and trends</li>
                   <li>• Consumption statistics per meter</li>
                   <li>• Usage anomaly highlighting</li>
                 </ul>
@@ -648,5 +648,6 @@ const GenPDF = () => {
     </div>
   );
 };
+
 
 export default GenPDF;
