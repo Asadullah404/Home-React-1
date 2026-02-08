@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MdKeyboardArrowDown } from "react-icons/md";
-import { auth } from "../firebase"; // import auth
+import { auth } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase"; // Import Firestore
+import { db } from "../firebase";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = ({ isAdmin }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null); // To store the user's role
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        // Fetch the user's role from Firestore
         const userRef = doc(db, "users", currentUser.uid);
         const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
@@ -27,89 +27,113 @@ const Navbar = ({ isAdmin }) => {
   }, []);
 
   return (
-    <nav className="bg-blue-600 p-4 text-white shadow-md">
-      <div className="container mx-auto flex justify-between items-center">
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 120 }}
+      className="sticky top-0 z-50 backdrop-blur-md bg-black/30 border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
+    >
+      <div className="container mx-auto flex justify-between items-center p-4">
         {/* Logo and App Name */}
-        <Link to="/" className="flex items-center gap-2 hover:text-gray-200 transition">
-          <img src="/vite.PNG" alt="Logo" className="h-15 w-30 object-contain" />
+        <Link to="/" className="flex items-center gap-2 group">
+          <motion.img
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            src="/vite.PNG"
+            alt="Logo"
+            className="h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(0,255,255,0.5)]"
+          />
+          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 hidden sm:block">
+            NEXUS
+          </span>
         </Link>
 
-        {/* Improved Hamburger Menu Button */}
+        {/* Hamburger Menu Button */}
         <button
-          className="lg:hidden flex items-center justify-center w-10 h-10 bg-gray-200 rounded-md shadow-md border border-gray-400 hover:bg-gray-300 transition duration-300"
+          className="lg:hidden flex items-center justify-center w-10 h-10 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm border border-white/20"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
-          <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            {isMenuOpen ? (
-              <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            ) : (
-              <path d="M4 6h16M4 12h16m-7 6h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            )}
+          <svg className="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {isMenuOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <path d="M4 6h16M4 12h16m-7 6h7" />}
           </svg>
         </button>
 
         {/* Navigation Links */}
         <div
-          className={`${
-            isMenuOpen ? "block" : "hidden"
-          } lg:flex lg:items-center lg:space-x-6 space-y-4 lg:space-y-0 lg:static absolute bg-blue-600 w-full lg:w-auto p-4 lg:p-0 top-16 lg:top-0 left-0 z-50`}
+          className={`${isMenuOpen ? "flex" : "hidden"
+            } lg:flex flex-col lg:flex-row lg:items-center lg:space-x-6 absolute lg:static top-16 left-0 w-full lg:w-auto bg-black/90 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none p-4 lg:p-0 border-b lg:border-none border-white/10 transition-all duration-300 ease-in-out`}
         >
-          {/* Main Links */}
-          <Link to="/home" className="block px-4 py-2 rounded-lg text-center hover:bg-blue-700 transition">
-            Home
-          </Link>
+          <NavLink to="/home">Home</NavLink>
 
           {/* Tools Dropdown */}
-          <div className="relative">
+          <div className="relative group">
             <button
-              className="flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              className="flex items-center gap-1 px-4 py-2 text-gray-300 hover:text-cyan-400 transition"
               onClick={() => setIsToolsOpen(!isToolsOpen)}
+              onMouseEnter={() => setIsToolsOpen(true)}
             >
-              Tools <MdKeyboardArrowDown className="h-4 w-4" />
+              Tools <MdKeyboardArrowDown className="transition-transform group-hover:rotate-180" />
             </button>
-            <div className={`absolute left-0 bg-white text-black rounded-lg shadow-lg mt-2 w-40 ${isToolsOpen ? "block" : "hidden"}`}>
-              <Link to="/datainc" className="block px-4 py-2 hover:bg-gray-100">Data Increment</Link>
-            </div>
+            <AnimatePresence>
+              {isToolsOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute left-0 mt-2 w-48 bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden shadow-[0_0_15px_rgba(0,255,255,0.2)]"
+                  onMouseLeave={() => setIsToolsOpen(false)}
+                >
+                  <Link to="/datainc" className="block px-4 py-3 text-gray-300 hover:bg-cyan-500/20 hover:text-white transition">Data Increment</Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Admin Link (Conditional Rendering) */}
           {isAdmin && (
-            <Link to="/admin-dashboard" className="block px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
-              Admin Dashboard
-            </Link>
+            <NavLink to="/admin-dashboard" className="text-purple-400 hover:text-purple-300">Admin</NavLink>
           )}
 
-          {/* Show User Dashboard only when logged in */}
           {user && (
-            <Link
-              to="/user-dashboard"
-              className="block px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
-            >
-              User Dashboard
-            </Link>
+            <NavLink to="/user-dashboard" className="text-green-400 hover:text-green-300">Dashboard</NavLink>
           )}
 
-          {/* Auth Links */}
           {!user ? (
-            <Link to="/login" className="block px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition">
-              Login
+            <Link to="/login">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-2 rounded-full font-bold text-black bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 shadow-[0_0_15px_rgba(0,255,255,0.5)] transition"
+              >
+                Login
+              </motion.button>
             </Link>
           ) : (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 auth.signOut();
                 setUser(null);
-                setRole(null); // Clear the role on logout
+                setRole(null);
               }}
-              className="block px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition"
+              className="px-6 py-2 rounded-full font-bold text-white border border-red-500/50 hover:bg-red-500/20 shadow-[0_0_10px_rgba(255,0,0,0.3)] transition"
             >
               Logout
-            </button>
+            </motion.button>
           )}
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
+
+const NavLink = ({ to, children, className = "" }) => (
+  <Link
+    to={to}
+    className={`block px-4 py-2 text-gray-300 hover:text-cyan-400 transition relative group ${className}`}
+  >
+    {children}
+    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full" />
+  </Link>
+);
 
 export default Navbar;

@@ -18,6 +18,7 @@ import UserSearchPage from "./pages/UserSearchPage";
 import History from "./pages/History";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Background3D from "./components/Background3D";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -31,7 +32,7 @@ function App() {
         // Fetch the user's role from Firestore
         const userRef = doc(db, "users", user.uid); // Using the user's UID to find the role
         const userDoc = await getDoc(userRef);
-        
+
         if (userDoc.exists()) {
           const userRole = userDoc.data().role; // Get role from Firestore
           if (userRole === "admin") {
@@ -50,12 +51,13 @@ function App() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen text-white relative">
+      <Background3D />
       {/* Navbar */}
       <Navbar user={user} setUser={setUser} isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
 
       {/* Main Content */}
-      <main className="flex-grow">
+      <main className="flex-grow container mx-auto px-4 py-8 z-10 relative">
         <Routes>
           {/* Redirect root (/) to /home */}
           <Route path="/" element={<Navigate to="/home" />} />

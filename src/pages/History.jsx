@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { db } from "../firebase"; // Import db from your firebase.js file
 import { collection, getDocs, query, where, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useParams } from "react-router-dom";
+import { GlassCard, NeonButton } from "../components/FuturisticUI";
 
 const History = () => {
   const [historyData, setHistoryData] = useState([]);
@@ -94,87 +95,93 @@ const History = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 bg-white shadow-lg rounded-lg max-w-2xl">
-      <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">History of {email}</h1>
+    <div className="container mx-auto p-6 flex justify-center">
+      <GlassCard className="max-w-4xl w-full">
+        <h1 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-6">History of {email}</h1>
 
-      {/* Edit Form */}
-      {editMode && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Edit Reading</h2>
-          <form onSubmit={handleUpdate}>
-            <div className="mb-4">
-              <label className="block text-gray-700">Reading</label>
-              <input
-                type="text"
-                value={editReading}
-                onChange={(e) => setEditReading(e.target.value)}
-                className="border px-4 py-2 rounded w-full"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700">Date</label>
-              <input
-                type="date"
-                value={editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-                className="border px-4 py-2 rounded w-full"
-              />
-            </div>
-            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-              Update Reading
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditMode(false)}
-              className="bg-gray-500 text-white px-4 py-2 rounded ml-4"
-            >
-              Cancel
-            </button>
-          </form>
-        </div>
-      )}
+        {/* Edit Form */}
+        {editMode && (
+          <div className="mb-8 p-4 bg-black/50 border border-cyan-500/30 rounded-xl">
+            <h2 className="text-xl font-semibold text-cyan-400 mb-4">Edit Reading</h2>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="block text-gray-300">Reading</label>
+                <input
+                  type="text"
+                  value={editReading}
+                  onChange={(e) => setEditReading(e.target.value)}
+                  className="w-full p-2 rounded-lg bg-black/50 border border-cyan-500/30 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300">Date</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full p-2 rounded-lg bg-black/50 border border-cyan-500/30 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+              <div className="flex gap-4">
+                <NeonButton type="submit">
+                  Update Reading
+                </NeonButton>
+                <button
+                  type="button"
+                  onClick={() => setEditMode(false)}
+                  className="px-6 py-2 rounded-full font-bold text-white border border-gray-500/50 hover:bg-gray-500/20 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
-      {/* History Table */}
-      <table className="min-w-full table-auto">
-        <thead>
-          <tr>
-            <th className="px-4 py-2 text-left">Reading</th>
-            <th className="px-4 py-2 text-left">Date</th>
-            <th className="px-4 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {historyData.length > 0 ? (
-            historyData.map((reading, index) => (
-              <tr key={index} className="border-b">
-                <td className="px-4 py-2">{reading.reading}</td>
-                <td className="px-4 py-2">
-                  {/* Correctly access createdAt field */}
-                  {reading.createdAt ? new Date(reading.createdAt.seconds * 1000).toLocaleDateString() : "N/A"}
-                </td>
-                <td className="px-4 py-2">
-                  <button
-                    onClick={() => handleEdit(reading)}
-                    className="bg-yellow-500 text-white px-4 py-2 rounded mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(reading.id)}
-                    className="bg-red-500 text-white px-4 py-2 rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
+        {/* History Table */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="px-4 py-3 text-cyan-400">Reading</th>
+                <th className="px-4 py-3 text-cyan-400">Date</th>
+                <th className="px-4 py-3 text-cyan-400">Actions</th>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="3" className="px-4 py-2 text-center">No history available</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {historyData.length > 0 ? (
+                historyData.map((reading, index) => (
+                  <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition">
+                    <td className="px-4 py-3 text-gray-300">{reading.reading}</td>
+                    <td className="px-4 py-3 text-gray-300">
+                      {/* Correctly access createdAt field */}
+                      {reading.createdAt ? new Date(reading.createdAt.seconds * 1000).toLocaleDateString() : "N/A"}
+                    </td>
+                    <td className="px-4 py-3 flex gap-2">
+                      <button
+                        onClick={() => handleEdit(reading)}
+                        className="px-4 py-1 rounded-lg text-sm bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 hover:bg-yellow-500/30 transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(reading.id)}
+                        className="px-4 py-1 rounded-lg text-sm bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 transition"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="3" className="px-4 py-6 text-center text-gray-400">No history available</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </GlassCard>
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
+import { GlassCard, NeonButton } from "../components/FuturisticUI";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -55,98 +56,96 @@ const Signup = () => {
   };
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg dark:bg-gray-800">
-        <div className="p-6 sm:p-8 space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">
-            Create Your Account
-          </h1>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="username" className="block">Username</label>
-              <input
-                type="text"
-                name="username"
-                id="username"
-                placeholder="Enter your username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg p-2"
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg p-2"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block">Password</label>
-              <input
-                type="password"
-                name="password"
-                id="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg p-2"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="block">Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                id="confirmPassword"
-                placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg p-2"
-              />
-            </div>
-
-            {error && <p className="text-red-600">{error}</p>}
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-            >
-              Create Account
-            </button>
-          </form>
-
-          <div className="text-center">OR</div>
-
-          <button
-            onClick={handleGoogleSignUp}
-            className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 flex items-center justify-center"
-          >
-            <img
-              src="https://www.svgrepo.com/show/355037/google.svg"
-              alt="Google Logo"
-              className="h-5 w-5 mr-2"
+    <section className="min-h-screen flex items-center justify-center p-4">
+      <GlassCard className="w-full max-w-md p-8">
+        <h1 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-8">
+          Create Your Account
+        </h1>
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="username" className="block text-gray-300 mb-2">Username</label>
+            <input
+              type="text"
+              name="username"
+              id="username"
+              placeholder="Enter your username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              className="w-full p-3 rounded-lg bg-black/50 border border-cyan-500/30 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
             />
-            Sign up with Google
-          </button>
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-gray-300 mb-2">Email Address</label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full p-3 rounded-lg bg-black/50 border border-cyan-500/30 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-gray-300 mb-2">Password</label>
+            <input
+              type="password"
+              name="password"
+              id="password"
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full p-3 rounded-lg bg-black/50 border border-cyan-500/30 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+            />
+          </div>
+          <div>
+            <label htmlFor="confirmPassword" className="block text-gray-300 mb-2">Confirm Password</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              id="confirmPassword"
+              placeholder="Confirm your password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+              className="w-full p-3 rounded-lg bg-black/50 border border-cyan-500/30 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+            />
+          </div>
 
-          <p className="text-sm text-center">
-            Already have an account?{" "}
-            <Link to="/login" className="text-blue-600 hover:underline">
-              Login here
-            </Link>
-          </p>
-        </div>
-      </div>
+          {error && <p className="text-red-500 text-center font-bold">{error}</p>}
+
+          <NeonButton
+            type="submit"
+            className="w-full"
+          >
+            Create Account
+          </NeonButton>
+        </form>
+
+        <div className="text-center text-gray-400 my-4">OR</div>
+
+        <NeonButton
+          onClick={handleGoogleSignUp}
+          className="w-full flex items-center justify-center gap-3 !border-red-500 hover:!bg-red-500/20 !shadow-[0_0_15px_rgba(255,0,0,0.4)]"
+        >
+          <img
+            src="https://www.svgrepo.com/show/355037/google.svg"
+            alt="Google Logo"
+            className="h-6 w-6"
+          />
+          Sign up with Google
+        </NeonButton>
+
+        <p className="text-sm text-center text-gray-300 mt-6">
+          Already have an account?{" "}
+          <Link to="/login" className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline">
+            Login here
+          </Link>
+        </p>
+      </GlassCard>
     </section>
   );
 };

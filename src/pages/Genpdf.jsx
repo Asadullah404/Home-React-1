@@ -5,6 +5,7 @@ import { db } from "../firebase";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import Chart from "chart.js/auto";
+import { GlassCard, NeonButton } from "../components/FuturisticUI";
 
 const GenPDF = () => {
   const [meterIds, setMeterIds] = useState([]);
@@ -110,15 +111,15 @@ const GenPDF = () => {
       const screenWidth = window.innerWidth || 800;
       const width = Math.min(800, screenWidth - 20); // margin on sides
       const height = Math.floor(width * 0.6); // 3:2 aspect ratio (good for charts)
-  
+
       // Set both internal & CSS sizes
       canvas.width = width;
       canvas.height = height;
       canvas.style.width = width + "px";
       canvas.style.height = height + "px";
-  
+
       const ctx = canvas.getContext("2d");
-  
+
       const chart = new Chart(ctx, {
         type: type,
         data: data,
@@ -146,41 +147,41 @@ const GenPDF = () => {
           scales:
             type !== "pie" && type !== "doughnut"
               ? {
-                  x: {
-                    title: { display: true, text: options.xAxisLabel || "Date" },
-                    ticks: { font: { size: 8 }, maxRotation: 45 },
-                  },
-                  y: {
-                    title: { display: true, text: options.yAxisLabel || "Reading" },
-                    ticks: { font: { size: 8 } },
-                    beginAtZero: options.beginAtZero !== false,
-                  },
-                }
+                x: {
+                  title: { display: true, text: options.xAxisLabel || "Date" },
+                  ticks: { font: { size: 8 }, maxRotation: 45 },
+                },
+                y: {
+                  title: { display: true, text: options.yAxisLabel || "Reading" },
+                  ticks: { font: { size: 8 } },
+                  beginAtZero: options.beginAtZero !== false,
+                },
+              }
               : {},
         },
       });
-  
+
       // Export after render
       setTimeout(() => {
         // Create export canvas with same size
         const exportCanvas = document.createElement("canvas");
         exportCanvas.width = width;
         exportCanvas.height = height;
-  
+
         const exportCtx = exportCanvas.getContext("2d");
         exportCtx.fillStyle = "#ffffff"; // white background
         exportCtx.fillRect(0, 0, width, height);
         exportCtx.drawImage(canvas, 0, 0, width, height);
-  
+
         // JPEG compression
         const chartImage = exportCanvas.toDataURL("image/jpeg", 0.7);
-  
+
         resolve(chartImage);
         chart.destroy();
       }, 300);
     });
   };
-  
+
   // Enhanced color palette
   const getColorPalette = (index) => {
     const colors = [
@@ -199,11 +200,11 @@ const GenPDF = () => {
   // Add professional header with logo and metadata
   const addProfessionalHeader = async (doc, title, subtitle = null) => {
     const pageWidth = doc.internal.pageSize.width;
-    
+
     // Header background
     doc.setFillColor(41, 128, 185);
     doc.rect(0, 0, pageWidth, 50, 'F');
-    
+
     // Load and add logo
     try {
       const logoImage = await loadImageBase64('/vite.png');
@@ -212,22 +213,22 @@ const GenPDF = () => {
     } catch (e) {
       console.log('Logo not available:', e);
     }
-    
+
     // Title - positioned to the right of logo
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text(title, 50, 25, { align: 'left' });
-    
+
     if (subtitle) {
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
       doc.text(subtitle, 50, 35, { align: 'left' });
     }
-    
+
     // Reset text color
     doc.setTextColor(0, 0, 0);
-    
+
     return 60; // Return Y position after header
   };
 
@@ -235,7 +236,7 @@ const GenPDF = () => {
   const addFooter = (doc, pageNum, totalPages, generatedDate) => {
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
-    
+
     doc.setFontSize(8);
     doc.setTextColor(128, 128, 128);
     doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
@@ -255,7 +256,7 @@ const GenPDF = () => {
       }
 
       console.log('Starting detailed PDF generation...');
-      
+
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
@@ -263,14 +264,14 @@ const GenPDF = () => {
       let pageCount = 1;
 
       let y = await addProfessionalHeader(
-        doc, 
+        doc,
         'Detailed Consumption Analysis Report',
         `Period: ${new Date(fromDate).toLocaleDateString()} - ${new Date(toDate).toLocaleDateString()}`
       );
 
       console.log('Fetching readings data...');
       const readingsByMeter = await fetchReadingsData();
-      
+
       if (!readingsByMeter || Object.keys(readingsByMeter).length === 0) {
         throw new Error('No data found for the selected criteria');
       }
@@ -280,14 +281,14 @@ const GenPDF = () => {
       for (let meterId of Object.keys(readingsByMeter)) {
         try {
           const data = readingsByMeter[meterId];
-          
+
           if (!data || data.length === 0) {
             console.log(`No data for meter ${meterId}, skipping...`);
             continue;
           }
 
           console.log(`Processing meter ${meterId} with ${data.length} readings`);
-          
+
           if (y + 100 > pageHeight - 30) {
             addFooter(doc, pageCount, '?', generatedDate);
             doc.addPage();
@@ -319,11 +320,11 @@ const GenPDF = () => {
               const prevReading = parseFloat(sortedData[i - 1].reading) || 0;
               const currReading = parseFloat(sortedData[i].reading) || 0;
               const units = currReading - prevReading;
-              
+
               // Only include positive consumption (handle meter resets)
               if (units >= 0 && units < 10000) { // Reasonable upper limit to filter out meter resets
                 const changePercentage = prevReading > 0 ? ((units / prevReading) * 100) : 0;
-                
+
                 consumptionData.push([
                   sortedData[i].dateString || sortedData[i].date.toLocaleDateString(),
                   prevReading.toFixed(2),
@@ -331,7 +332,7 @@ const GenPDF = () => {
                   units.toFixed(2),
                   changePercentage.toFixed(1) + '%'
                 ]);
-                
+
                 totalUnits += units;
                 maxDaily = Math.max(maxDaily, units);
                 minDaily = Math.min(minDaily, units);
@@ -344,20 +345,20 @@ const GenPDF = () => {
 
           if (validReadings > 0) {
             avgDaily = totalUnits / validReadings;
-            
+
             // Consumption statistics box
             doc.setFillColor(252, 248, 227);
             doc.roundedRect(20, y, pageWidth - 40, 25, 2, 2, 'F');
-            
+
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(133, 100, 4);
             doc.text('Consumption Summary:', 25, y + 8);
-            
+
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(0, 0, 0);
             doc.text(`Total: ${totalUnits.toFixed(2)} units | Average: ${avgDaily.toFixed(2)} units/reading | Range: ${minDaily.toFixed(2)} - ${maxDaily.toFixed(2)} units`, 25, y + 16);
-            
+
             y += 35;
           }
 
@@ -420,7 +421,7 @@ const GenPDF = () => {
                   }
 
                   console.log(`Creating chart for meter ${meterId}...`);
-                  
+
                   const canvas = document.createElement('canvas');
                   const meterIndex = Object.keys(readingsByMeter).indexOf(meterId);
                   const color = getColorPalette(meterIndex);
@@ -448,16 +449,16 @@ const GenPDF = () => {
                   };
 
                   const chartImage = await createHighQualityChart(canvas, 'line', chartData, chartOptions);
-                  
+
                   doc.setFontSize(12);
                   doc.setFont('helvetica', 'bold');
                   doc.setTextColor(52, 73, 94);
                   doc.text(`Consumption Pattern - Meter ${meterId}`, 20, y);
                   y += 10;
-                  
+
                   doc.addImage(chartImage, 'PNG', 20, y, pageWidth - 40, 70);
                   y += 85;
-                  
+
                   console.log(`Chart created successfully for meter ${meterId}`);
                 } catch (chartError) {
                   console.error(`Error creating chart for meter ${meterId}:`, chartError);
@@ -506,138 +507,140 @@ const GenPDF = () => {
   };
 
   return (
-    <div className="container mx-auto p-8 bg-white shadow-xl rounded-lg max-w-2xl">
-      <h1 className="text-4xl font-extrabold text-center text-blue-600 mb-8">
-        📊 Generate Detailed Consumption Report
-      </h1>
-      
-      <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-green-700">
-              <strong>Detailed Analysis Features:</strong> Granular consumption breakdown, daily usage patterns, detailed tables with all readings, and usage anomaly highlighting.
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="container mx-auto p-6 flex justify-center">
+      <GlassCard className="max-w-3xl w-full p-8">
+        <h1 className="text-3xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-500 mb-8">
+          📊 Generate Detailed Consumption Report
+        </h1>
 
-      <form className="space-y-6">
-        <div>
-          <label className="block text-lg text-gray-700 font-semibold mb-2">
-            📋 Select Meter IDs:
-          </label>
-          <select
-            multiple
-            value={selectedMeterIds}
-            onChange={(e) =>
-              setSelectedMeterIds(
-                Array.from(e.target.selectedOptions, (option) => option.value)
-              )
-            }
-            className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[120px]"
-          >
-            {meterIds.map((meterId) => (
-              <option key={meterId} value={meterId}>
-                📊 Meter {meterId}
-              </option>
-            ))}
-          </select>
-          <p className="text-sm text-gray-600 mt-1">Hold Ctrl/Cmd to select multiple meters</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-lg text-gray-700 font-semibold mb-2">
-              📅 From Date:
-            </label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-lg text-gray-700 font-semibold mb-2">
-              📅 To Date:
-            </label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-center">
-          <button
-            onClick={generateDetailedPDF}
-            disabled={isGenerating}
-            className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:from-green-700 hover:to-green-800 shadow-lg focus:outline-none focus:ring-4 focus:ring-green-400 transform transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-          >
-            {isGenerating ? '🔄 Processing...' : '📈 Generate Detailed Report'}
-          </button>
-        </div>
-
-        {/* Progress indicator */}
-        {isGenerating && (
-          <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mr-3"></div>
-              <div className="text-sm text-gray-700">
-                <p className="font-medium">Generating detailed consumption analysis report...</p>
-                <p className="text-gray-500">This may take a few moments for optimal chart rendering and data processing.</p>
-              </div>
+        <div className="bg-green-900/30 border-l-4 border-green-500 p-4 mb-8 rounded backdrop-blur-sm">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
             </div>
-          </div>
-        )}
-
-        {/* Report features */}
-        <div className="mt-8">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-            <h3 className="text-xl font-bold text-green-800 mb-4">📈 What's Included in Your Report:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-semibold text-green-700 mb-2">📊 Data Analysis</h4>
-                <ul className="text-sm text-green-600 space-y-1">
-                  <li>• Granular consumption breakdown</li>
-                  <li>• Daily usage patterns and trends</li>
-                  <li>• Consumption statistics per meter</li>
-                  <li>• Usage anomaly highlighting</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-green-700 mb-2">🎨 Visual Features</h4>
-                <ul className="text-sm text-green-600 space-y-1">
-                  <li>• Professional header with company logo</li>
-                  <li>• High-quality consumption charts</li>
-                  <li>• Detailed tables with all readings</li>
-                  <li>• Color-coded consumption indicators</li>
-                </ul>
-              </div>
+            <div className="ml-3">
+              <p className="text-sm text-green-300">
+                <strong>Detailed Analysis Features:</strong> Granular consumption breakdown, daily usage patterns, detailed tables with all readings, and usage anomaly highlighting.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Usage tips */}
-        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="text-md font-bold text-yellow-800 mb-2">💡 Usage Tips:</h4>
-          <ul className="text-sm text-yellow-700 space-y-1">
-            <li>• Select multiple meters for comprehensive analysis</li>
-            <li>• Choose appropriate date ranges for meaningful insights</li>
-            <li>• Report includes your company logo automatically</li>
-            <li>• All charts are rendered in high-quality for printing</li>
-            <li>• Perfect for operational review and audit purposes</li>
-          </ul>
-        </div>
-      </form>
+        <form className="space-y-6">
+          <div>
+            <label className="block text-lg text-gray-300 font-semibold mb-2">
+              📋 Select Meter IDs:
+            </label>
+            <select
+              multiple
+              value={selectedMeterIds}
+              onChange={(e) =>
+                setSelectedMeterIds(
+                  Array.from(e.target.selectedOptions, (option) => option.value)
+                )
+              }
+              className="mt-2 p-3 w-full bg-black/50 border border-green-500/30 text-white rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[120px] transition-all"
+            >
+              {meterIds.map((meterId) => (
+                <option key={meterId} value={meterId} className="hover:bg-green-500/20 p-2 rounded">
+                  📊 Meter {meterId}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-2">Hold Ctrl/Cmd to select multiple meters</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-lg text-gray-300 font-semibold mb-2">
+                📅 From Date:
+              </label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="mt-2 p-3 w-full bg-black/50 border border-green-500/30 text-white rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-lg text-gray-300 font-semibold mb-2">
+                📅 To Date:
+              </label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="mt-2 p-3 w-full bg-black/50 border border-green-500/30 text-white rounded-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-center pt-4">
+            <NeonButton
+              onClick={generateDetailedPDF}
+              disabled={isGenerating}
+              className="px-8 py-4 w-full md:w-auto !border-green-500 !text-green-400 hover:!bg-green-500/20 shadow-[0_0_15px_rgba(74,222,128,0.3)]"
+            >
+              {isGenerating ? '🔄 Processing...' : '📈 Generate Detailed Report'}
+            </NeonButton>
+          </div>
+
+          {/* Progress indicator */}
+          {isGenerating && (
+            <div className="mt-6 bg-black/40 border border-green-500/30 rounded-lg p-4 backdrop-blur-sm">
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-400 mr-3"></div>
+                <div className="text-sm text-gray-300">
+                  <p className="font-medium text-green-400">Generating detailed consumption analysis report...</p>
+                  <p className="text-gray-500 text-xs mt-1">This may take a few moments for optimal chart rendering and data processing.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Report features */}
+          <div className="mt-8">
+            <div className="bg-black/30 border border-green-500/20 rounded-lg p-6">
+              <h3 className="text-xl font-bold text-green-400 mb-4">📈 What's Included in Your Report:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-green-300 mb-2">📊 Data Analysis</h4>
+                  <ul className="text-sm text-gray-400 space-y-1">
+                    <li>• Granular consumption breakdown</li>
+                    <li>• Daily usage patterns and trends</li>
+                    <li>• Consumption statistics per meter</li>
+                    <li>• Usage anomaly highlighting</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-green-300 mb-2">🎨 Visual Features</h4>
+                  <ul className="text-sm text-gray-400 space-y-1">
+                    <li>• Professional header with company logo</li>
+                    <li>• High-quality consumption charts</li>
+                    <li>• Detailed tables with all readings</li>
+                    <li>• Color-coded consumption indicators</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Usage tips */}
+          <div className="mt-6 bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+            <h4 className="text-md font-bold text-yellow-400 mb-2">💡 Usage Tips:</h4>
+            <ul className="text-sm text-yellow-200/70 space-y-1">
+              <li>• Select multiple meters for comprehensive analysis</li>
+              <li>• Choose appropriate date ranges for meaningful insights</li>
+              <li>• Report includes your company logo automatically</li>
+              <li>• All charts are rendered in high-quality for printing</li>
+              <li>• Perfect for operational review and audit purposes</li>
+            </ul>
+          </div>
+        </form>
+      </GlassCard>
     </div>
   );
 };

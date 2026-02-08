@@ -1,7 +1,6 @@
-"use client"
 import React, { useState, useEffect } from "react"
-import { Button } from "../components/ui/Button"
-import { Card, CardContent, CardHeader } from "../components/ui/Card"
+import { motion } from "framer-motion"
+import { GlassCard, NeonButton } from "../components/FuturisticUI"
 
 const Home1 = () => {
   // State for Guess the Number
@@ -87,101 +86,93 @@ const Home1 = () => {
 
   // Game components
   const GuessNumber = () => (
-    <Card className="bg-white">
-      <CardHeader>
-        <h2>Guess the Number</h2>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <label htmlFor="guessInput" className="block text-sm font-medium text-gray-700">Enter your guess:</label>
-          <input
-            id="guessInput"
-            type="number"
-            value={guess}
-            onChange={(e) => setGuess(e.target.value)}
-            placeholder="Pick a number between 1 and 100"
-            className="mt-1 p-3 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            min="1"
-            max="100"
-          />
-        </div>
-  
-        <Button
-          onClick={() => {
-            const guessNum = Number.parseInt(guess)
-            if (isNaN(guessNum)) {
-              setGuessMessage("Please enter a valid number!")
-              return
-            }
-            if (guessNum === targetNumber) {
-              setGuessMessage("Correct! 🎉")
-              setTargetNumber(Math.floor(Math.random() * 100) + 1)
-            } else if (guessNum < targetNumber) {
-              setGuessMessage("Too low! Try again!")
-            } else {
-              setGuessMessage("Too high! Try again!")
-            }
-          }}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-        >
-          Guess
-        </Button>
-  
-        {guessMessage && <p className="mt-4 text-lg text-blue-600">{guessMessage}</p>}
-      </CardContent>
-    </Card>
+    <GlassCard>
+      <h2 className="text-2xl font-bold mb-4 text-cyan-400">Guess the Number</h2>
+      <div className="mb-4">
+        <label htmlFor="guessInput" className="block text-sm font-medium text-gray-300">Enter your guess:</label>
+        <input
+          id="guessInput"
+          type="number"
+          value={guess}
+          onChange={(e) => setGuess(e.target.value)}
+          placeholder="Pick a number between 1 and 100"
+          className="mt-1 p-3 w-full rounded-lg border border-cyan-500/30 bg-black/50 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          min="1"
+          max="100"
+        />
+      </div>
+
+      <NeonButton
+        onClick={() => {
+          const guessNum = Number.parseInt(guess)
+          if (isNaN(guessNum)) {
+            setGuessMessage("Please enter a valid number!")
+            return
+          }
+          if (guessNum === targetNumber) {
+            setGuessMessage("Correct! 🎉")
+            setTargetNumber(Math.floor(Math.random() * 100) + 1)
+          } else if (guessNum < targetNumber) {
+            setGuessMessage("Too low! Try again!")
+          } else {
+            setGuessMessage("Too high! Try again!")
+          }
+        }}
+        className="w-full"
+      >
+        Guess
+      </NeonButton>
+
+      {guessMessage && <p className="mt-4 text-lg text-cyan-400 font-bold">{guessMessage}</p>}
+    </GlassCard>
   )
 
   const MemoryCard = () => (
-    <Card className="bg-white">
-      <CardHeader>
-        <h2>Memory Card</h2>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-4 gap-2">
-          {cards.map((card, index) => (
-            <Button
-              key={index}
-              onClick={() => {
-                if (disabled || flipped[index] || solved[index]) return
-                const newFlipped = [...flipped]
-                newFlipped[index] = true
-                setFlipped(newFlipped)
-                const flippedCards = newFlipped.reduce(
-                  (acc, cur, idx) => (cur && !solved[idx] ? [...acc, idx] : acc),
-                  [],
-                )
-                if (flippedCards.length === 2) {
-                  setDisabled(true)
-                  if (cards[flippedCards[0]] === cards[flippedCards[1]]) {
-                    setSolved((prev) => {
-                      const newSolved = [...prev]
-                      newSolved[flippedCards[0]] = true
-                      newSolved[flippedCards[1]] = true
-                      return newSolved
+    <GlassCard>
+      <h2 className="text-2xl font-bold mb-4 text-cyan-400">Memory Card</h2>
+      <div className="grid grid-cols-4 gap-2">
+        {cards.map((card, index) => (
+          <NeonButton
+            key={index}
+            onClick={() => {
+              if (disabled || flipped[index] || solved[index]) return
+              const newFlipped = [...flipped]
+              newFlipped[index] = true
+              setFlipped(newFlipped)
+              const flippedCards = newFlipped.reduce(
+                (acc, cur, idx) => (cur && !solved[idx] ? [...acc, idx] : acc),
+                [],
+              )
+              if (flippedCards.length === 2) {
+                setDisabled(true)
+                if (cards[flippedCards[0]] === cards[flippedCards[1]]) {
+                  setSolved((prev) => {
+                    const newSolved = [...prev]
+                    newSolved[flippedCards[0]] = true
+                    newSolved[flippedCards[1]] = true
+                    return newSolved
+                  })
+                  setDisabled(false)
+                } else {
+                  setTimeout(() => {
+                    setFlipped((prev) => {
+                      const newFlipped = [...prev]
+                      newFlipped[flippedCards[0]] = false
+                      newFlipped[flippedCards[1]] = false
+                      return newFlipped
                     })
                     setDisabled(false)
-                  } else {
-                    setTimeout(() => {
-                      setFlipped((prev) => {
-                        const newFlipped = [...prev]
-                        newFlipped[flippedCards[0]] = false
-                        newFlipped[flippedCards[1]] = false
-                        return newFlipped
-                      })
-                      setDisabled(false)
-                    }, 1000)
-                  }
+                  }, 1000)
                 }
-              }}
-              className={`h-16 ${flipped[index] || solved[index] ? "bg-blue-200" : "bg-blue-500"} text-white`}
-            >
-              {(flipped[index] || solved[index]) && card}
-            </Button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+              }
+            }}
+            className={`h-16 ${flipped[index] || solved[index] ? "bg-cyan-500/50" : "bg-black/50"}`}
+          >
+            {(flipped[index] || solved[index]) ? card : "?"}
+          </NeonButton>
+        ))}
+      </div>
+    </GlassCard>
   )
 
   const WhackAMole = () => (
@@ -244,25 +235,21 @@ const Home1 = () => {
     const status = winner ? `Winner: ${winner}` : `Next player: ${xIsNext ? "X" : "O"}`
 
     return (
-      <Card className="bg-white">
-        <CardHeader>
-          <h2>Tic Tac Toe</h2>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-2">
-            {board.map((cell, index) => (
-              <Button
-                key={index}
-                onClick={() => handleClick(index)}
-                className="h-16 bg-blue-500 text-white"
-              >
-                {cell}
-              </Button>
-            ))}
-          </div>
-          <p className="mt-4 text-lg">{status}</p>
-        </CardContent>
-      </Card>
+      <GlassCard>
+        <h2 className="text-2xl font-bold mb-4 text-cyan-400">Tic Tac Toe</h2>
+        <div className="grid grid-cols-3 gap-2">
+          {board.map((cell, index) => (
+            <NeonButton
+              key={index}
+              onClick={() => handleClick(index)}
+              className="h-16 text-2xl font-bold"
+            >
+              {cell}
+            </NeonButton>
+          ))}
+        </div>
+        <p className="mt-4 text-lg text-white font-mono">{status}</p>
+      </GlassCard>
     )
   }
 
@@ -287,29 +274,26 @@ const Home1 = () => {
     }
 
     return (
-      <Card className="bg-white">
-        <CardHeader>
-          <h2>Rock Paper Scissors</h2>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2 mb-4">
-            {choices.map((choice) => (
-              <Button
-                key={choice}
-                onClick={() => handleChoice(choice)}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-              >
-                {choice}
-              </Button>
-            ))}
-          </div>
-          {playerChoice && computerChoice && (
-            <p className="text-lg">
-              You chose {playerChoice}, computer chose {computerChoice}. {rpsResult}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <GlassCard>
+        <h2 className="text-2xl font-bold mb-4 text-cyan-400">Rock Paper Scissors</h2>
+        <div className="flex gap-2 mb-4 justify-center">
+          {choices.map((choice) => (
+            <NeonButton
+              key={choice}
+              onClick={() => handleChoice(choice)}
+            >
+              {choice}
+            </NeonButton>
+          ))}
+        </div>
+        {playerChoice && computerChoice && (
+          <p className="text-lg text-white">
+            You: <span className="text-cyan-400">{playerChoice}</span> <br />
+            Computer: <span className="text-pink-400">{computerChoice}</span> <br />
+            <span className="font-bold text-xl">{rpsResult}</span>
+          </p>
+        )}
+      </GlassCard>
     )
   }
 
@@ -325,30 +309,26 @@ const Home1 = () => {
     }
 
     return (
-      <Card className="bg-white">
-        <CardHeader>
-          <h2>Color Guess</h2>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <div
-              className="h-16 w-full rounded-lg"
-              style={{ backgroundColor: colorToGuess }}
-            ></div>
-          </div>
-          <div className="flex gap-2">
-            {colorOptions.map((color, index) => (
-              <Button
-                key={index}
-                onClick={() => handleGuess(color)}
-                className="h-16 w-full"
-                style={{ backgroundColor: color }}
-              ></Button>
-            ))}
-          </div>
-          {colorMessage && <p className="mt-4 text-lg text-blue-600">{colorMessage}</p>}
-        </CardContent>
-      </Card>
+      <GlassCard>
+        <h2 className="text-2xl font-bold mb-4 text-cyan-400">Color Guess</h2>
+        <div className="mb-4">
+          <div
+            className="h-24 w-full rounded-lg shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+            style={{ backgroundColor: colorToGuess }}
+          ></div>
+        </div>
+        <div className="flex gap-2">
+          {colorOptions.map((color, index) => (
+            <NeonButton
+              key={index}
+              onClick={() => handleGuess(color)}
+              className="h-16 w-full opacity-80 hover:opacity-100"
+              style={{ backgroundColor: color }}
+            ></NeonButton>
+          ))}
+        </div>
+        {colorMessage && <p className="mt-4 text-lg text-cyan-400 font-bold">{colorMessage}</p>}
+      </GlassCard>
     )
   }
 
@@ -412,34 +392,30 @@ const Home1 = () => {
     }
 
     return (
-      <Card className="bg-white">
-        <CardHeader>
-          <h2>Word Scramble</h2>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <p className="text-lg">Scrambled word: {scrambledWord}</p>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="unscrambledGuess" className="block text-sm font-medium text-gray-700">Enter your guess:</label>
-            <input
-              id="unscrambledGuess"
-              type="text"
-              value={unscrambledGuess}
-              onChange={(e) => setUnscrambledGuess(e.target.value)}
-              placeholder="Unscramble the word"
-              className="mt-1 p-3 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <Button
-            onClick={handleGuess}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-          >
-            Guess
-          </Button>
-          {scrambleMessage && <p className="mt-4 text-lg text-blue-600">{scrambleMessage}</p>}
-        </CardContent>
-      </Card>
+      <GlassCard>
+        <h2 className="text-2xl font-bold mb-4 text-cyan-400">Word Scramble</h2>
+        <div className="mb-4">
+          <p className="text-lg text-white font-mono tracking-widest">{scrambledWord}</p>
+        </div>
+        <div className="mb-4">
+          <label htmlFor="unscrambledGuess" className="block text-sm font-medium text-gray-300">Enter your guess:</label>
+          <input
+            id="unscrambledGuess"
+            type="text"
+            value={unscrambledGuess}
+            onChange={(e) => setUnscrambledGuess(e.target.value)}
+            placeholder="Unscramble the word"
+            className="mt-1 p-3 w-full rounded-lg border border-cyan-500/30 bg-black/50 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          />
+        </div>
+        <NeonButton
+          onClick={handleGuess}
+          className="w-full"
+        >
+          Guess
+        </NeonButton>
+        {scrambleMessage && <p className="mt-4 text-lg text-cyan-400 font-bold">{scrambleMessage}</p>}
+      </GlassCard>
     )
   }
 
@@ -456,36 +432,32 @@ const Home1 = () => {
     }
 
     return (
-      <Card className="bg-white">
-        <CardHeader>
-          <h2>Math Quiz</h2>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <p className="text-lg">
-              What is {mathQuestion.num1} {mathQuestion.operator} {mathQuestion.num2}?
-            </p>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="mathAnswer" className="block text-sm font-medium text-gray-700">Enter your answer:</label>
-            <input
-              id="mathAnswer"
-              type="number"
-              value={mathAnswer}
-              onChange={(e) => setMathAnswer(e.target.value)}
-              placeholder="Enter your answer"
-              className="mt-1 p-3 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <Button
-            onClick={handleAnswer}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-          >
-            Submit
-          </Button>
-          <p className="mt-4 text-lg">Score: {mathScore}</p>
-        </CardContent>
-      </Card>
+      <GlassCard>
+        <h2 className="text-2xl font-bold mb-4 text-cyan-400">Math Quiz</h2>
+        <div className="mb-4">
+          <p className="text-lg text-white">
+            What is {mathQuestion.num1} {mathQuestion.operator} {mathQuestion.num2}?
+          </p>
+        </div>
+        <div className="mb-4">
+          <label htmlFor="mathAnswer" className="block text-sm font-medium text-gray-300">Enter your answer:</label>
+          <input
+            id="mathAnswer"
+            type="number"
+            value={mathAnswer}
+            onChange={(e) => setMathAnswer(e.target.value)}
+            placeholder="Enter your answer"
+            className="mt-1 p-3 w-full rounded-lg border border-cyan-500/30 bg-black/50 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          />
+        </div>
+        <NeonButton
+          onClick={handleAnswer}
+          className="w-full"
+        >
+          Submit
+        </NeonButton>
+        <p className="mt-4 text-lg text-white">Score: <span className="text-cyan-400 font-bold">{mathScore}</span></p>
+      </GlassCard>
     )
   }
 
@@ -526,30 +498,26 @@ const Home1 = () => {
     }
 
     return (
-      <Card className="bg-white">
-        <CardHeader>
-          <h2>Simon Says</h2>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-2">
-            {["red", "blue", "green", "yellow"].map((color) => (
-              <Button
-                key={color}
-                onClick={() => handleColorClick(color)}
-                className={`h-16 bg-${color}-500 hover:bg-${color}-600 text-white`}
-              >
-                {color}
-              </Button>
-            ))}
-          </div>
-          <Button
-            onClick={() => setIsPlaying(true)}
-            className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-          >
-            Start
-          </Button>
-        </CardContent>
-      </Card>
+      <GlassCard>
+        <h2 className="text-2xl font-bold mb-4 text-cyan-400">Simon Says</h2>
+        <div className="grid grid-cols-2 gap-2">
+          {["red", "blue", "green", "yellow"].map((color) => (
+            <motion.button
+              key={color}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleColorClick(color)}
+              className={`h-24 rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.1)] active:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-colors`}
+              style={{ backgroundColor: color }}
+            />
+          ))}
+        </div>
+        <NeonButton
+          onClick={() => setIsPlaying(true)}
+          className="w-full mt-4"
+        >
+          Start
+        </NeonButton>
+      </GlassCard>
     )
   }
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase"; // Ensure Firebase configuration is correctly set up and imported
 import { collection, query, where, orderBy, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { GlassCard, NeonButton } from "../components/FuturisticUI";
 
 const History = () => {
   const [meterReadings, setMeterReadings] = useState([]);
@@ -104,58 +105,60 @@ const History = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen p-6">
       <header className="mb-10 text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">Meter Readings History</h1>
-        <p className="text-gray-600 text-lg">Track and view your meter readings by ID</p>
+        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-2">
+          Meter Readings History
+        </h1>
+        <p className="text-gray-300 text-lg">Track and view your meter readings by ID</p>
       </header>
 
       <section className="container mx-auto">
         {loading ? (
           <div className="text-center">
-            <p className="text-gray-600 text-xl">Loading meter readings...</p>
+            <p className="text-cyan-400 text-xl animate-pulse">Loading meter readings...</p>
           </div>
         ) : error ? (
           <div className="text-center">
-            <p className="text-red-600 text-xl">{error}</p>
+            <p className="text-red-500 text-xl bg-red-900/20 p-4 rounded-lg inline-block border border-red-500/50">{error}</p>
           </div>
         ) : Object.keys(meterReadings).length === 0 ? (
           <div className="text-center">
-            <p className="text-gray-600 text-xl">No readings found for your account.</p>
+            <p className="text-gray-400 text-xl">No readings found for your account.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(meterReadings).map(([meterId, readings]) => (
-              <div
+              <GlassCard
                 key={meterId}
-                className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow"
+                className="p-6 hover:scale-105 transition-transform duration-300"
               >
-                <h3 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
-                  Meter ID: <span className="text-blue-600">{meterId}</span>
+                <h3 className="text-xl font-semibold text-white mb-4 border-b border-gray-700 pb-2">
+                  Meter ID: <span className="text-cyan-400 drop-shadow-[0_0_5px_rgba(0,255,255,0.5)]">{meterId}</span>
                 </h3>
 
-                <ul>
+                <ul className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                   {readings.map((reading) => (
                     <li
                       key={reading.id}
-                      className="mb-4 last:mb-0 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                      className="p-3 bg-black/40 rounded-lg border border-gray-700 hover:border-cyan-500/50 transition-colors"
                     >
-                      <p className="text-gray-700 font-medium">
-                        Reading: <span className="font-bold">{reading.reading}</span>
+                      <p className="text-gray-300 font-medium">
+                        Reading: <span className="font-bold text-white">{reading.reading}</span>
                       </p>
                       <p className="text-sm text-gray-500">
                         Date: {new Date(reading.readingDate).toLocaleDateString()}
                       </p>
-                      <div className="flex justify-between mt-2">
+                      <div className="flex justify-between mt-3 pt-2 border-t border-gray-700/50">
                         <button
                           onClick={() => handleEdit(reading)}
-                          className="text-blue-500 hover:text-blue-700"
+                          className="text-cyan-500 hover:text-cyan-300 transition-colors text-sm font-semibold"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteReading(meterId, reading.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-300 transition-colors text-sm font-semibold"
                         >
                           Delete
                         </button>
@@ -163,7 +166,7 @@ const History = () => {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </GlassCard>
             ))}
           </div>
         )}
@@ -171,47 +174,47 @@ const History = () => {
 
       {/* Edit Reading Modal */}
       {editReading && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Edit Reading</h2>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+          <GlassCard className="w-full max-w-md p-8 relative">
+            <h2 className="text-2xl font-semibold text-cyan-400 mb-6">Edit Reading</h2>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-600">Reading Value</label>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Reading Value</label>
               <input
                 type="number"
                 value={newReading.reading}
                 onChange={(e) => setNewReading({ ...newReading, reading: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg mt-2"
+                className="w-full p-3 rounded-lg bg-black/50 border border-cyan-500/30 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
             </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-600">Date</label>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-400 mb-2">Date</label>
               <input
                 type="date"
                 value={newReading.readingDate}
                 onChange={(e) => setNewReading({ ...newReading, readingDate: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg mt-2"
+                className="w-full p-3 rounded-lg bg-black/50 border border-cyan-500/30 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
             </div>
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end gap-4">
               <button
                 onClick={() => setEditReading(null)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg"
+                className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition"
               >
                 Cancel
               </button>
-              <button
+              <NeonButton
                 onClick={() => handleUpdateReading(editReading.meterId, editReading.id)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                className="px-6"
               >
                 Save Changes
-              </button>
+              </NeonButton>
             </div>
-          </div>
+          </GlassCard>
         </div>
       )}
 
       <footer className="mt-16 text-center text-gray-500">
-        <p>&copy; {new Date().getFullYear()} Electricity Meter Readings. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} <span className="text-cyan-800">Electricity Meter Readings</span>. All rights reserved.</p>
       </footer>
     </div>
   );

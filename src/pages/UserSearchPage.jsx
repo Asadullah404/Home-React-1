@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { GlassCard, NeonButton } from "../components/FuturisticUI";
 
 const UserSearchPage = () => {
   const [email, setEmail] = useState("");
@@ -65,59 +66,61 @@ const UserSearchPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 bg-white shadow-lg rounded-lg max-w-2xl">
-      <h1 className="text-2xl md:text-3xl font-semibold text-center text-gray-800 mb-4">
-        Search and Manage Users
-      </h1>
+    <div className="container mx-auto p-6 flex justify-center">
+      <GlassCard className="max-w-2xl w-full">
+        <h1 className="text-2xl md:text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-500 mb-8">
+          Search and Manage Users
+        </h1>
 
-      {/* Search Box */}
-      <form onSubmit={handleSearch} className="mb-4 flex flex-col sm:flex-row gap-2">
-        <input
-          type="text"
-          placeholder="Search by email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md"
-        />
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-        >
-          Search
-        </button>
-      </form>
+        {/* Search Box */}
+        <form onSubmit={handleSearch} className="mb-8 flex flex-col sm:flex-row gap-4">
+          <input
+            type="text"
+            placeholder="Search by email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 rounded-lg bg-black/50 border border-cyan-500/30 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+          />
+          <NeonButton
+            type="submit"
+            className="w-full sm:w-auto"
+          >
+            Search
+          </NeonButton>
+        </form>
 
-      {/* Users Table (Responsive) */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full table-auto border-collapse border border-gray-200">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="px-4 py-2 text-left border border-gray-200">Email</th>
-              <th className="px-4 py-2 text-left border border-gray-200">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.uid} className="border-b">
-                <td
-                  className="px-4 py-2 cursor-pointer text-blue-600 hover:underline"
-                  onClick={() => handleRedirectToHistory(user.email)}
-                >
-                  {user.email}
-                </td>
-                <td className="px-4 py-2">
-                  <button
-                    onClick={() => handleDeleteUser(user.uid)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    Delete
-                  </button>
-                </td>
+        {/* Users Table (Responsive) */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="px-4 py-3 text-cyan-400">Email</th>
+                <th className="px-4 py-3 text-cyan-400">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.uid} className="border-b border-white/5 hover:bg-white/5 transition">
+                  <td
+                    className="px-4 py-3 cursor-pointer text-blue-400 hover:text-blue-300 hover:underline"
+                    onClick={() => handleRedirectToHistory(user.email)}
+                  >
+                    {user.email}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleDeleteUser(user.uid)}
+                      className="text-red-400 hover:text-red-300 transition-colors font-semibold"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </GlassCard>
     </div>
   );
 };

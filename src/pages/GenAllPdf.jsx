@@ -3,6 +3,7 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { db } from "../firebase"; // Import db from your firebase.js file
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { GlassCard, NeonButton } from "../components/FuturisticUI";
 
 const GeneratePdfPage = () => {
   const [users, setUsers] = useState([]);
@@ -99,73 +100,76 @@ const GeneratePdfPage = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded-md">
-      <h1 className="text-2xl font-bold text-gray-700 mb-4">Generate Users Readings PDF</h1>
-      <form onSubmit={generatePDF} className="space-y-6">
-        <div>
-          <label htmlFor="users" className="block text-sm font-medium text-gray-700">
-            Select Users
-          </label>
-          <select
-            id="users"
-            multiple
-            value={selectedUsers.map(user => user.uid)}
-            onChange={(e) =>
-              setSelectedUsers(
-                Array.from(e.target.selectedOptions, option =>
-                  users.find(user => user.uid === option.value)
+    <div className="max-w-3xl mx-auto p-6 flex justify-center">
+      <GlassCard className="w-full">
+        <h1 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-8">Generate Users Readings PDF</h1>
+        <form onSubmit={generatePDF} className="space-y-6">
+          <div>
+            <label htmlFor="users" className="block text-lg font-medium text-gray-300 mb-2">
+              Select Users
+            </label>
+            <select
+              id="users"
+              multiple
+              value={selectedUsers.map(user => user.uid)}
+              onChange={(e) =>
+                setSelectedUsers(
+                  Array.from(e.target.selectedOptions, option =>
+                    users.find(user => user.uid === option.value)
+                  )
                 )
-              )
-            }
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-            required
+              }
+              className="w-full p-3 rounded-lg bg-black/50 border border-purple-500/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all min-h-[120px]"
+              required
+            >
+              {users.map(user => (
+                <option key={user.uid} value={user.uid} className="hover:bg-purple-500/20 p-2 rounded">
+                  {user.email}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-2">Hold Ctrl/Cmd to select multiple users</p>
+          </div>
+
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <label htmlFor="fromDate" className="block text-sm font-medium text-gray-300 mb-2">
+                From Date
+              </label>
+              <input
+                type="date"
+                id="fromDate"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full p-3 rounded-lg bg-black/50 border border-purple-500/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                required
+              />
+            </div>
+
+            <div className="flex-1">
+              <label htmlFor="toDate" className="block text-sm font-medium text-gray-300 mb-2">
+                To Date
+              </label>
+              <input
+                type="date"
+                id="toDate"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full p-3 rounded-lg bg-black/50 border border-purple-500/30 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          <NeonButton
+            type="submit"
+            disabled={loading}
+            className="w-full"
           >
-            {users.map(user => (
-              <option key={user.uid} value={user.uid}>
-                {user.email}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex space-x-4">
-          <div className="flex-1">
-            <label htmlFor="fromDate" className="block text-sm font-medium text-gray-700">
-              From Date
-            </label>
-            <input
-              type="date"
-              id="fromDate"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-
-          <div className="flex-1">
-            <label htmlFor="toDate" className="block text-sm font-medium text-gray-700">
-              To Date
-            </label>
-            <input
-              type="date"
-              id="toDate"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {loading ? "Generating..." : "Generate PDF"}
-        </button>
-      </form>
+            {loading ? "Generating..." : "Generate PDF"}
+          </NeonButton>
+        </form>
+      </GlassCard>
     </div>
   );
 };

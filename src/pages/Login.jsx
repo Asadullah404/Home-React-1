@@ -1,9 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { auth, googleProvider } from "../firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useState } from "react";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "../firebase"; // Import Firestore
+import { db } from "../firebase";
+import { GlassCard, NeonButton } from "../components/FuturisticUI";
+import { motion } from "framer-motion";
 
 const Login = () => {
   const [error, setError] = useState("");
@@ -65,35 +67,35 @@ const Login = () => {
   };
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg dark:bg-gray-800">
+    <section className="min-h-screen flex items-center justify-center p-4">
+      <GlassCard className="w-full max-w-md">
         <div className="p-6 sm:p-8 space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">
+          <h1 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-8">
             Welcome Back
           </h1>
 
-          {error && <p className="text-red-600 text-center">{error}</p>}
+          {error && <p className="text-red-500 text-center font-bold">{error}</p>}
 
-          <button
+          <NeonButton
             onClick={handleGoogleSignIn}
-            className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 flex items-center justify-center"
+            className="w-full flex items-center justify-center gap-3 !border-red-500 hover:!bg-red-500/20 !shadow-[0_0_15px_rgba(255,0,0,0.4)]"
           >
             <img
               src="https://www.svgrepo.com/show/355037/google.svg"
               alt="Google Logo"
-              className="h-5 w-5 mr-2"
+              className="h-6 w-6"
             />
             Sign in with Google
-          </button>
+          </NeonButton>
 
-          <p className="text-sm text-center">
+          <p className="text-sm text-center text-gray-300">
             Don't have an account?{" "}
-            <a href="/signup" className="text-blue-600 hover:underline">
+            <Link to="/signup" className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline">
               Sign up here
-            </a>
+            </Link>
           </p>
         </div>
-      </div>
+      </GlassCard>
     </section>
   );
 };
